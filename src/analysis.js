@@ -205,13 +205,25 @@ document.addEventListener('DOMContentLoaded', () => {
             // 5. BPM
             const bpm = calculateBPM(rmsValues, sampleRate / bufferSize);
 
+            // 6. Vocal Presence Heuristic (Simple)
+            // Vocals often have high variance in spectral centroid between 1000Hz and 3000Hz
+            // We'll use a simple threshold on the variance of the centroid
+            const centroidMean = spectralCentroids.reduce((a, b) => a + b, 0) / spectralCentroids.length;
+            const centroidVariance = spectralCentroids.reduce((a, b) => a + Math.pow(b - centroidMean, 2), 0) / spectralCentroids.length;
+            const centroidStdDev = Math.sqrt(centroidVariance);
+
+            // Heuristic: Pop/Vocal tracks often have high centroid variability
+            const vocalScore = Math.min(100, Math.round(mapRange(centroidStdDev, 10, 50, 0, 100)));
+            const hasVocals = vocalScore > 40; // Arbitrary threshold
+
             // --- SCORING ---
             const metrics = {
                 lufs: approximateLufs,
                 headroom: headroom,
                 intro: introDuration,
                 energyStdDev: energyStdDev,
-                bpm: bpm || 0
+                bpm: bpm || 0,
+                vocalPresence: vocalScore // 0-100
             };
 
             const score = calculateScore(metrics);
@@ -429,6 +441,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (metrics.bpm > 150) dist = metrics.bpm - 150;
             let penalty = (dist / 30) * 15;
             score += Math.round(Math.max(0, 15 - penalty));
+        }
+
+        // 6. Vocal Bonus (Small bonus for detection)
+        if (metrics.vocalPresence > 50) {
+            score += 5; // Bonus checks
         }
 
         return Math.min(100, Math.max(0, Math.round(score)));
