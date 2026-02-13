@@ -366,20 +366,26 @@ document.addEventListener('DOMContentLoaded', () => {
             findLabelsBtn.disabled = false;
 
             findLabelsBtn.onclick = async () => {
-                const genreSelect = document.getElementById('genre-select');
-                const selectedGenre = genreSelect.value;
-                if (!selectedGenre) {
-                    alert('Please select a genre to find compatible labels.');
+                const selectedGenre = document.getElementById('genre-select').value;
+                const selectedMood = document.getElementById('mood-select').value;
+                const selectedEnergy = document.getElementById('energy-select').value;
+
+                if (!selectedGenre || !selectedMood || !selectedEnergy) {
+                    alert('Please select Genre, Mood, and Energy to find compatible labels.');
                     return;
                 }
 
-                // Save metrics to localStorage for label-fit.html standalone page
-                localStorage.setItem('trackMetrics', JSON.stringify({ metrics, score }));
+                // Save metrics + selections to localStorage
+                localStorage.setItem('trackMetrics', JSON.stringify({ metrics, score, genre: selectedGenre, mood: selectedMood, energy: selectedEnergy }));
 
                 // Show Label Section
                 const labelsSection = document.getElementById('labels-section');
                 labelsSection.classList.remove('hidden');
                 labelsSection.scrollIntoView({ behavior: 'smooth' });
+
+                // Show subtitle with current filters
+                const subtitle = document.getElementById('labels-subtitle');
+                if (subtitle) subtitle.textContent = `Genre: ${selectedGenre} · Mood: ${selectedMood} · Energy: ${selectedEnergy}`;
 
                 const labelsGrid = document.getElementById('labels-grid');
                 labelsGrid.innerHTML = '<div class="loader"></div>';
@@ -396,42 +402,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         return;
                     }
 
-                    // Filter by genre (flexible matching)
-                    let relevantLabels = labels.filter(l => {
-                        if (!l.subgenres) return false;
-                        const subs = Array.isArray(l.subgenres) ? l.subgenres : [l.subgenres];
-                        return subs.some(g => {
-                            const gLower = String(g).toLowerCase();
-                            const selLower = selectedGenre.toLowerCase();
-                            // Match if either contains the other, or share a keyword
-                            return gLower.includes(selLower) || selLower.includes(gLower) ||
-                                selLower.split(' ').some(word => word.length > 3 && gLower.includes(word));
-                        });
-                    });
-
-                    // FALLBACK: if no genre match, use ALL labels (sorted by score)
-                    if (relevantLabels.length === 0) {
-                        console.log(`No genre-specific labels for "${selectedGenre}", showing all labels by match score.`);
-                        relevantLabels = labels;
-                    }
-
-                    // Import matching logic
+                    // Import matching logic (new algorithm)
                     const { calculateMatchScore, renderLabels } = await import('./label-matcher.js');
 
-                    // Calculate Scores
-                    const matchedLabels = relevantLabels.map(label => {
-                        const matchScore = calculateMatchScore(metrics, label);
+                    // Score ALL labels using genre + mood + energy
+                    const matchedLabels = labels.map(label => {
+                        const matchScore = calculateMatchScore(label, selectedGenre, selectedMood, selectedEnergy);
                         return { ...label, matchScore };
                     });
 
-                    // Sort & Slice
+                    // Sort by score descending, take top 20 with score > 20
                     matchedLabels.sort((a, b) => b.matchScore - a.matchScore);
-                    const topLabels = matchedLabels.slice(0, 20);
+                    const topLabels = matchedLabels.filter(l => l.matchScore > 20).slice(0, 20);
 
                     if (topLabels.length === 0) {
-                        labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">No matching labels found.</p>';
+                        // Fallback: show top 10 anyway
+                        const fallback = matchedLabels.slice(0, 10);
+                        labelsGrid.innerHTML = '';
+                        renderLabels(fallback, 'labels-grid');
                     } else {
-                        renderLabels(topLabels, metrics, 'labels-grid');
+                        renderLabels(topLabels, 'labels-grid');
                     }
 
                 } catch (err) {

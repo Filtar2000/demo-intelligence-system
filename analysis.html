@@ -61,21 +61,71 @@
 
                 <!-- Genre Selection -->
                 <div class="genre-selector">
-                    <label for="genre-select">Select Genre (Required for Label Matching):</label>
-                    <select id="genre-select">
-                        <option value="" disabled selected>-- Choose Subgenre --</option>
-                        <option value="melodic techno">Melodic Techno</option>
-                        <option value="melodic house">Melodic House</option>
-                        <option value="peak-time techno">Peak-time Techno</option>
-                        <option value="hard techno">Hard Techno</option>
-                        <option value="minimal">Minimal / Deep Tech</option>
-                        <option value="tech house">Tech House</option>
-                        <option value="afro house">Afro House</option>
-                        <option value="organic house">Organic House</option>
-                        <option value="indie dance">Indie Dance</option>
-                        <option value="nu disco">Nu Disco</option>
-                        <option value="industrial techno">Industrial Techno</option>
-                        <option value="ambient">Ambient / Experimental</option>
+                    <label for="genre-select">Genre *</label>
+                    <select id="genre-select" required>
+                        <option value="" disabled selected>-- Choose Genre --</option>
+                        <optgroup label="House">
+                            <option value="house">House</option>
+                            <option value="deep house">Deep House</option>
+                            <option value="tech house">Tech House</option>
+                            <option value="future house">Future House</option>
+                            <option value="bass house">Bass House</option>
+                            <option value="afro house">Afro House</option>
+                            <option value="organic house">Organic House</option>
+                        </optgroup>
+                        <optgroup label="Techno">
+                            <option value="melodic techno">Melodic Techno</option>
+                            <option value="melodic house">Melodic House & Techno</option>
+                            <option value="peak-time techno">Peak-time Techno</option>
+                            <option value="hard techno">Hard Techno</option>
+                            <option value="industrial techno">Industrial Techno</option>
+                            <option value="minimal">Minimal / Deep Tech</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                            <option value="trance">Trance</option>
+                            <option value="psy-trance">Psy-Trance</option>
+                            <option value="progressive house">Progressive House</option>
+                            <option value="indie dance">Indie Dance</option>
+                            <option value="nu disco">Nu Disco</option>
+                            <option value="dubstep">Dubstep</option>
+                            <option value="drum and bass">Drum & Bass</option>
+                            <option value="breaks">Breaks</option>
+                            <option value="electro house">Electro House</option>
+                            <option value="big room">Big Room</option>
+                            <option value="hard dance">Hard Dance / Hardcore</option>
+                            <option value="downtempo">Electronica / Downtempo</option>
+                            <option value="ambient">Ambient / Experimental</option>
+                            <option value="dance">Dance / Pop-Dance</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Mood Selection -->
+                <div class="genre-selector">
+                    <label for="mood-select">Mood *</label>
+                    <select id="mood-select" required>
+                        <option value="" disabled selected>-- Describe the mood --</option>
+                        <option value="dark">Dark / Mysterious</option>
+                        <option value="hypnotic">Hypnotic / Trippy</option>
+                        <option value="driving">Driving / Relentless</option>
+                        <option value="uplifting">Uplifting / Euphoric</option>
+                        <option value="emotional">Emotional / Melancholic</option>
+                        <option value="ethereal">Ethereal / Dreamy</option>
+                        <option value="groovy">Groovy / Funky</option>
+                        <option value="energetic">Energetic / Raw</option>
+                        <option value="atmospheric">Atmospheric / Cinematic</option>
+                        <option value="warm">Warm / Deep</option>
+                    </select>
+                </div>
+
+                <!-- Energy Selection -->
+                <div class="genre-selector">
+                    <label for="energy-select">Energy *</label>
+                    <select id="energy-select" required>
+                        <option value="" disabled selected>-- Energy level --</option>
+                        <option value="high">High — Festival / Peak-time</option>
+                        <option value="medium">Medium — Club / Groove</option>
+                        <option value="low">Low — Lounge / Afterhours</option>
                     </select>
                 </div>
 
@@ -183,33 +233,77 @@
             <!-- Label Matches Section (Hidden initially) -->
             <section id="labels-section" class="labels-section hidden">
                 <h2 class="section-title">Compatible Labels</h2>
+                <p class="section-subtitle" id="labels-subtitle"></p>
                 <div id="labels-grid" class="labels-grid">
                     <!-- Label Cards injected here -->
                 </div>
             </section>
         </section>
+
+        <!-- Label Detail Modal -->
+        <div id="label-detail-modal" class="modal-overlay hidden">
+            <div class="modal-content label-detail-content">
+                <button class="close-modal" id="close-label-detail">&times;</button>
+                <div class="label-detail-header">
+                    <h2 id="ld-name"></h2>
+                    <span id="ld-score" class="ld-score-badge"></span>
+                </div>
+                <p id="ld-bio" class="ld-bio"></p>
+                <div id="ld-tags" class="ld-tags"></div>
+                <div class="ld-info-grid">
+                    <div class="ld-info-item" id="ld-energy-wrap"><span class="ld-info-label">Energy</span><span
+                            id="ld-energy" class="ld-info-value"></span></div>
+                    <div class="ld-info-item" id="ld-email-wrap"><span class="ld-info-label">Demo Email</span><a
+                            id="ld-email" class="ld-info-value ld-email-link" href="#"></a></div>
+                    <div class="ld-info-item" id="ld-website-wrap"><span class="ld-info-label">Website</span><a
+                            id="ld-website" class="ld-info-value ld-email-link" href="#" target="_blank"></a></div>
+                    <div class="ld-info-item" id="ld-sc-wrap"><span class="ld-info-label">SoundCloud</span><a
+                            id="ld-soundcloud" class="ld-info-value ld-email-link" href="#" target="_blank">Listen →</a>
+                    </div>
+                </div>
+                <div class="ld-actions">
+                    <button id="ld-generate-pitch" class="btn-primary" style="display:none;">✉ Generate Pitch
+                        Email</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Pitch Modal (Hidden) -->
     <div id="pitch-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">AI Pitch Generator</h2>
+                <h2 class="modal-title">✉ AI Pitch Generator</h2>
                 <button id="close-modal" class="close-modal">&times;</button>
             </div>
 
-            <div class="tabs">
-                <button class="tab-btn active">Formal</button>
-                <button class="tab-btn">Casual</button>
-                <button class="tab-btn">Short</button>
+            <div id="pitch-loading" class="pitch-loading">
+                <div class="loader"></div>
+                <p>Generating pitch with AI...</p>
             </div>
 
-            <div class="email-preview">
-                <div id="email-subject" class="email-subject">Subject: ...</div>
-                <div id="email-body" class="email-body">Generating...</div>
+            <div id="pitch-content" class="hidden">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="0">Formal</button>
+                    <button class="tab-btn" data-tab="1">Casual</button>
+                    <button class="tab-btn" data-tab="2">Creative</button>
+                </div>
+
+                <div class="email-preview">
+                    <div id="email-subject" class="email-subject">Subject: ...</div>
+                    <div id="email-body" class="email-body"></div>
+                </div>
+
+                <div class="pitch-actions">
+                    <button id="copy-btn" class="btn-secondary">📋 Copy to Clipboard</button>
+                    <button id="mailto-btn" class="btn-primary">📧 Open in Mail App</button>
+                </div>
             </div>
 
-            <button id="copy-btn" class="btn-primary full-width" style="margin-top: 15px;">Copy to Clipboard</button>
+            <div id="pitch-error" class="pitch-error hidden">
+                <p>⚠ Failed to generate pitch. Please try again.</p>
+                <button id="retry-pitch" class="btn-secondary">Retry</button>
+            </div>
         </div>
     </div>
 

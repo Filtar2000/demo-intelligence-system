@@ -1,120 +1,384 @@
 import './app.js'; // Imports Supabase client
 import { generatePitch } from './demo-generator.js';
 
-// --- EXPORTED FUNCTIONS (used by analysis.js when dynamically imported) ---
+// ─── SCORING: Genre (40%) + Mood (35%) + Energy (25%) ───
 
-export function calculateMatchScore(trackMetrics, label) {
-    let score = 0;
+export function calculateMatchScore(label, userGenre, userMood, userEnergy) {
+    let genreScore = 0;
+    let moodScore = 0;
+    let energyScore = 0;
 
-    // 1. BPM Compatibility (35 pts)
-    const trackBpm = Math.round(trackMetrics.bpm);
-    const labelMin = label.bpm_min || 0;
-    const labelMax = label.bpm_max || 999;
+    // 1. GENRE MATCH (40 pts)
+    const subs = Array.isArray(label.subgenres) ? label.subgenres : [];
+    const selLower = userGenre.toLowerCase();
 
-    if (trackBpm >= labelMin && trackBpm <= labelMax) {
-        score += 35;
+    // Genre alias mapping for flexible matching
+    const genreAliases = {
+        'melodic techno': ['melodic techno', 'melodic house & techno', 'melodic house'],
+        'melodic house': ['melodic house & techno', 'melodic house', 'melodic techno'],
+        'house': ['house', 'deep house', 'tech house'],
+        'deep house': ['deep house', 'house'],
+        'tech house': ['tech house', 'house', 'minimal|deep tech'],
+        'minimal': ['minimal|deep tech', 'minimal', 'deep tech'],
+        'peak-time techno': ['techno', 'peak-time techno'],
+        'hard techno': ['techno', 'hard techno'],
+        'industrial techno': ['techno', 'industrial techno'],
+        'afro house': ['afro house'],
+        'organic house': ['organic house', 'electronica|downtempo', 'deep house'],
+        'trance': ['trance'],
+        'psy-trance': ['psy-trance', 'trance'],
+        'progressive house': ['progressive house', 'melodic house & techno'],
+        'dubstep': ['dubstep'],
+        'drum and bass': ['drum&bass', 'drum and bass'],
+        'breaks': ['breaks'],
+        'electro house': ['electro house'],
+        'big room': ['big room', 'electro house'],
+        'hard dance': ['hard dance|hardcore', 'hard dance'],
+        'downtempo': ['electronica|downtempo', 'ambient'],
+        'ambient': ['ambient', 'electronica|downtempo'],
+        'indie dance': ['indie dance', 'melodic house & techno'],
+        'nu disco': ['nu disco', 'house'],
+        'dance': ['dance'],
+        'future house': ['future house'],
+        'bass house': ['bass house', 'future house']
+    };
+
+    const aliases = genreAliases[selLower] || [selLower];
+
+    const hasGenreMatch = subs.some(g => {
+        const gLower = g.toLowerCase();
+        return aliases.some(alias =>
+            gLower.includes(alias) || alias.includes(gLower) ||
+            alias.split(' ').some(w => w.length > 3 && gLower.includes(w))
+        );
+    });
+    if (hasGenreMatch) genreScore = 40;
+
+    // 2. MOOD MATCH (35 pts)
+    const labelMoods = Array.isArray(label.mood) ? label.mood.map(m => m.toLowerCase()) : [];
+    if (labelMoods.length > 0) {
+        // Mood affinity map — related moods get partial score
+        const moodAffinities = {
+            'dark': ['hypnotic', 'atmospheric', 'driving'],
+            'hypnotic': ['dark', 'atmospheric', 'warm'],
+            'driving': ['energetic', 'dark'],
+            'uplifting': ['euphoric', 'emotional', 'ethereal'],
+            'emotional': ['melancholic', 'ethereal', 'warm', 'uplifting'],
+            'ethereal': ['atmospheric', 'warm', 'emotional', 'dreamy'],
+            'groovy': ['warm', 'energetic', 'funky'],
+            'energetic': ['driving', 'groovy', 'raw'],
+            'atmospheric': ['ethereal', 'dark', 'hypnotic', 'cinematic'],
+            'warm': ['groovy', 'ethereal', 'deep']
+        };
+
+        if (labelMoods.includes(userMood)) {
+            moodScore = 35;
+        } else {
+            const related = moodAffinities[userMood] || [];
+            const overlap = labelMoods.filter(m => related.includes(m));
+            if (overlap.length > 0) moodScore = 20;
+        }
     } else {
-        let diff = 0;
-        if (trackBpm < labelMin) diff = labelMin - trackBpm;
-        if (trackBpm > labelMax) diff = trackBpm - labelMax;
-        let penalty = diff * 5;
-        score += Math.max(0, 35 - penalty);
+        // No mood data → give partial credit if genre matched
+        moodScore = hasGenreMatch ? 10 : 0;
     }
 
-    // 2. Energy Match (30 pts)
-    let trackEnergy = 'medium';
-    if (trackMetrics.energyStdDev > 0.15) trackEnergy = 'high';
-    else if (trackMetrics.energyStdDev < 0.05) trackEnergy = 'low';
-
-    const labelEnergy = (label.energy_profile || 'medium').toLowerCase();
-
-    if (trackEnergy === labelEnergy) {
-        score += 30;
-    } else if (
-        (trackEnergy === 'high' && labelEnergy === 'medium') ||
-        (trackEnergy === 'medium' && labelEnergy === 'high') ||
-        (trackEnergy === 'medium' && labelEnergy === 'low') ||
-        (trackEnergy === 'low' && labelEnergy === 'medium')
-    ) {
-        score += 15;
-    }
-
-    // 3. LUFS Proximity (20 pts)
-    const trackLufs = trackMetrics.lufs;
-    const labelLufs = label.lufs_typical || -9;
-    const lufsDiff = Math.abs(trackLufs - labelLufs);
-
-    if (lufsDiff <= 1) {
-        score += 20;
+    // 3. ENERGY MATCH (25 pts)
+    const labelEnergy = (label.energy || label.energy_profile || '').toLowerCase();
+    if (labelEnergy) {
+        if (labelEnergy === userEnergy) {
+            energyScore = 25;
+        } else if (
+            (labelEnergy === 'high' && userEnergy === 'medium') ||
+            (labelEnergy === 'medium' && userEnergy === 'high') ||
+            (labelEnergy === 'medium' && userEnergy === 'low') ||
+            (labelEnergy === 'low' && userEnergy === 'medium')
+        ) {
+            energyScore = 12;
+        }
     } else {
-        let penalty = (lufsDiff - 1) * 2;
-        score += Math.max(0, 20 - penalty);
+        // No energy data → give partial credit if genre matched
+        energyScore = hasGenreMatch ? 8 : 0;
     }
 
-    // 4. Vocal Match (15 pts)
-    const trackHasVocals = trackMetrics.vocalPresence > 40;
-    const labelHasVocals = label.vocal || false;
-
-    if (trackHasVocals === labelHasVocals) {
-        score += 15;
-    }
-
-    return Math.round(score);
+    return genreScore + moodScore + energyScore;
 }
 
-export function renderLabels(labels, metrics, containerId = 'labels-grid') {
+// ─── RENDER LABEL CARDS ───
+
+export function renderLabels(labels, containerId = 'labels-grid') {
     const grid = document.getElementById(containerId);
     if (!grid) return;
-
     grid.innerHTML = '';
 
     labels.forEach(label => {
         const card = document.createElement('div');
         card.className = 'label-card';
+        card.style.cursor = 'pointer';
 
-        // Badge Color
+        // Score badge
         let badgeClass = 'match-badge';
         if (label.matchScore < 70) badgeClass += ' medium';
         if (label.matchScore < 40) badgeClass += ' low';
 
-        // Subgenres
+        // Subgenres (max 3)
         const subgenres = (label.subgenres || []).slice(0, 3).map(g =>
             `<span class="genre-tag">${g}</span>`
         ).join('');
+
+        // Mood tags (max 2)
+        const moods = (label.mood || []).slice(0, 2).map(m =>
+            `<span class="genre-tag mood-tag">${m}</span>`
+        ).join('');
+
+        // Energy indicator
+        const energyVal = label.energy || label.energy_profile || '';
+        const energyIcon = energyVal === 'high' ? '🔥' : energyVal === 'medium' ? '⚡' : energyVal === 'low' ? '🌙' : '';
 
         card.innerHTML = `
             <div class="label-header">
                 <div>
                     <div class="label-name">${label.name}</div>
-                    <div class="label-location">${label.country || 'Unknown'}</div>
+                    <div class="label-location">${energyIcon} ${label.country || ''}</div>
                 </div>
-                <div class="${badgeClass}">${label.matchScore}% Match</div>
+                <div class="${badgeClass}">${label.matchScore}%</div>
             </div>
-            
             <div class="tags-container">
-                ${subgenres}
+                ${subgenres}${moods}
             </div>
-            
-            <div style="margin-top: auto; display: flex; gap: 10px;">
-                <button class="btn-pitch btn-primary generate-pitch-btn" style="flex: 1; font-size: 0.85rem; padding: 10px;" data-label-id="${label.id}">
-                    Generate Pitch ✨
-                </button>
-            </div>
+            ${label.bio ? `<p class="label-bio-preview">${label.bio.substring(0, 80)}...</p>` : ''}
         `;
 
-        // Attach pitch modal event
-        const btn = card.querySelector('.generate-pitch-btn');
-        btn.addEventListener('click', () => {
-            const event = new CustomEvent('open-pitch-modal', { detail: { label, metrics } });
-            document.dispatchEvent(event);
+        // Open label detail on click
+        card.addEventListener('click', () => {
+            openLabelDetail(label);
         });
 
         grid.appendChild(card);
     });
 }
 
-// --- STANDALONE PAGE LOGIC (only runs on label-fit.html) ---
-// Guard: only run if we're on the label-fit page
+// ─── LABEL DETAIL MODAL ───
+
+let currentDetailLabel = null;
+
+function openLabelDetail(label) {
+    currentDetailLabel = label;
+    const modal = document.getElementById('label-detail-modal');
+    if (!modal) return;
+
+    document.getElementById('ld-name').textContent = label.name;
+    document.getElementById('ld-score').textContent = `${label.matchScore}% Match`;
+
+    // Bio
+    const bioEl = document.getElementById('ld-bio');
+    bioEl.textContent = label.bio || 'No description available for this label.';
+
+    // Tags (genres + moods + styles)
+    const tagsEl = document.getElementById('ld-tags');
+    tagsEl.innerHTML = '';
+    const allTags = [
+        ...(label.subgenres || []).map(g => ({ text: g, type: 'genre' })),
+        ...(label.mood || []).map(m => ({ text: m, type: 'mood' })),
+        ...(label.style || []).map(s => ({ text: s, type: 'style' }))
+    ];
+    allTags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = `ld-tag ld-tag-${tag.type}`;
+        span.textContent = tag.text;
+        tagsEl.appendChild(span);
+    });
+
+    // Energy
+    const energyVal = label.energy || label.energy_profile || '';
+    const energyWrap = document.getElementById('ld-energy-wrap');
+    if (energyVal) {
+        document.getElementById('ld-energy').textContent = energyVal.charAt(0).toUpperCase() + energyVal.slice(1);
+        energyWrap.style.display = '';
+    } else {
+        energyWrap.style.display = 'none';
+    }
+
+    // Demo email
+    const emailWrap = document.getElementById('ld-email-wrap');
+    const demoEmail = label.demo_email || label.email || '';
+    // Only show if it looks like an actual email
+    const isEmail = demoEmail.includes('@') && !demoEmail.includes('http');
+    if (isEmail) {
+        const emailEl = document.getElementById('ld-email');
+        emailEl.textContent = demoEmail;
+        emailEl.href = `mailto:${demoEmail}`;
+        emailWrap.style.display = '';
+    } else {
+        emailWrap.style.display = 'none';
+    }
+
+    // Website
+    const websiteWrap = document.getElementById('ld-website-wrap');
+    if (label.website) {
+        const wsEl = document.getElementById('ld-website');
+        wsEl.textContent = label.website.replace(/^https?:\/\//, '');
+        wsEl.href = label.website;
+        websiteWrap.style.display = '';
+    } else {
+        websiteWrap.style.display = 'none';
+    }
+
+    // SoundCloud
+    const scWrap = document.getElementById('ld-sc-wrap');
+    if (label.soundcloud_url) {
+        document.getElementById('ld-soundcloud').href = label.soundcloud_url;
+        scWrap.style.display = '';
+    } else {
+        scWrap.style.display = 'none';
+    }
+
+    // Generate Pitch button — show only if there's a valid email
+    const pitchBtn = document.getElementById('ld-generate-pitch');
+    if (isEmail) {
+        pitchBtn.style.display = 'block';
+    } else {
+        pitchBtn.style.display = 'none';
+    }
+
+    modal.classList.remove('hidden');
+}
+
+// ─── PITCH MODAL LOGIC ───
+
+let currentEmails = [];
+let currentPitchLabel = null;
+
+function initPitchModal() {
+    const pitchModal = document.getElementById('pitch-modal');
+    const detailModal = document.getElementById('label-detail-modal');
+    const closeModalBtn = document.getElementById('close-modal');
+    const closeDetailBtn = document.getElementById('close-label-detail');
+    const copyBtn = document.getElementById('copy-btn');
+    const mailtoBtn = document.getElementById('mailto-btn');
+    const retryBtn = document.getElementById('retry-pitch');
+    const tabBtns = document.querySelectorAll('#pitch-modal .tab-btn');
+    const generateBtn = document.getElementById('ld-generate-pitch');
+
+    // Close detail modal
+    if (closeDetailBtn) {
+        closeDetailBtn.addEventListener('click', () => detailModal.classList.add('hidden'));
+    }
+    if (detailModal) {
+        detailModal.addEventListener('click', (e) => {
+            if (e.target === detailModal) detailModal.classList.add('hidden');
+        });
+    }
+
+    // Close pitch modal
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => pitchModal.classList.add('hidden'));
+    }
+    if (pitchModal) {
+        pitchModal.addEventListener('click', (e) => {
+            if (e.target === pitchModal) pitchModal.classList.add('hidden');
+        });
+    }
+
+    // Generate pitch from detail modal
+    if (generateBtn) {
+        generateBtn.addEventListener('click', async () => {
+            if (!currentDetailLabel) return;
+            currentPitchLabel = currentDetailLabel;
+            detailModal.classList.add('hidden');
+            await showPitchModal(currentDetailLabel);
+        });
+    }
+
+    // Tab switching
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.tab);
+            if (!currentEmails[idx]) return;
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('email-subject').textContent = `Subject: ${currentEmails[idx].subject}`;
+            document.getElementById('email-body').textContent = currentEmails[idx].body;
+        });
+    });
+
+    // Copy button
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const subject = document.getElementById('email-subject').textContent.replace('Subject: ', '');
+            const body = document.getElementById('email-body').textContent;
+            navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`).then(() => {
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => copyBtn.textContent = '📋 Copy to Clipboard', 2000);
+            });
+        });
+    }
+
+    // Open in Mail App
+    if (mailtoBtn) {
+        mailtoBtn.addEventListener('click', () => {
+            const subject = document.getElementById('email-subject').textContent.replace('Subject: ', '');
+            const body = document.getElementById('email-body').textContent;
+            const email = currentPitchLabel?.demo_email || currentPitchLabel?.email || '';
+            const mailtoUrl = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        });
+    }
+
+    // Retry
+    if (retryBtn) {
+        retryBtn.addEventListener('click', () => {
+            if (currentPitchLabel) showPitchModal(currentPitchLabel);
+        });
+    }
+}
+
+async function showPitchModal(label) {
+    const pitchModal = document.getElementById('pitch-modal');
+    const pitchLoading = document.getElementById('pitch-loading');
+    const pitchContent = document.getElementById('pitch-content');
+    const pitchError = document.getElementById('pitch-error');
+
+    pitchModal.classList.remove('hidden');
+    pitchLoading.classList.remove('hidden');
+    pitchContent.classList.add('hidden');
+    pitchError.classList.add('hidden');
+
+    // Get stored metrics
+    const storedMetrics = localStorage.getItem('trackMetrics');
+    const trackMetrics = storedMetrics ? JSON.parse(storedMetrics).metrics : {};
+
+    try {
+        const variants = await generatePitch(label, trackMetrics);
+        currentEmails = variants;
+
+        if (currentEmails[0]) {
+            document.getElementById('email-subject').textContent = `Subject: ${currentEmails[0].subject}`;
+            document.getElementById('email-body').textContent = currentEmails[0].body;
+        }
+
+        // Reset tabs
+        document.querySelectorAll('#pitch-modal .tab-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === 0);
+        });
+
+        pitchLoading.classList.add('hidden');
+        pitchContent.classList.remove('hidden');
+    } catch (err) {
+        console.error('Pitch generation error:', err);
+        pitchLoading.classList.add('hidden');
+        pitchError.classList.remove('hidden');
+    }
+}
+
+// ─── ALSO SUPPORT LEGACY open-pitch-modal EVENT (from analysis.js) ───
+
+document.addEventListener('open-pitch-modal', async (e) => {
+    currentPitchLabel = e.detail.label;
+    await showPitchModal(e.detail.label);
+});
+
+// ─── STANDALONE PAGE LOGIC (label-fit.html) ───
 const isLabelFitPage = document.getElementById('no-results') !== null;
 
 if (isLabelFitPage) {
@@ -123,7 +387,6 @@ if (isLabelFitPage) {
         const labelsGrid = document.getElementById('labels-grid');
         const noResults = document.getElementById('no-results');
 
-        // 1. Retrieve Track Metrics from LocalStorage
         const storedMetrics = localStorage.getItem('trackMetrics');
         if (!storedMetrics) {
             alert('No analysis data found. Please analyze a track first.');
@@ -131,22 +394,18 @@ if (isLabelFitPage) {
             return;
         }
 
-        const { metrics, score: demoScore } = JSON.parse(storedMetrics);
+        const { metrics } = JSON.parse(storedMetrics);
 
-        // 2. Fetch Labels from Supabase
         try {
             const { data: labels, error } = await window.supabaseClient
                 .from('labels')
                 .select('*');
-
             if (error) throw error;
 
-            // 3. Match & Score Labels
             const matchedLabels = labels.map(label => {
-                const matchScore = calculateMatchScore(metrics, label);
+                const matchScore = calculateMatchScore(label, 'house', 'groovy', 'medium');
                 return { ...label, matchScore };
             });
-
             matchedLabels.sort((a, b) => b.matchScore - a.matchScore);
             const topLabels = matchedLabels.slice(0, 20);
 
@@ -157,74 +416,19 @@ if (isLabelFitPage) {
                 return;
             }
 
-            renderLabels(topLabels, metrics);
+            renderLabels(topLabels);
             labelsGrid.classList.remove('hidden');
-
         } catch (err) {
             console.error('Error fetching labels:', err);
             loader.classList.add('hidden');
-            alert('Failed to load labels. Check console for details.');
+            alert('Failed to load labels.');
         }
 
-        // 4. Modal Event Listeners (only on label-fit.html)
-        const modal = document.getElementById('pitch-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const emailSubjectEl = document.getElementById('email-subject');
-        const emailBodyEl = document.getElementById('email-body');
-        const copyBtn = document.getElementById('copy-btn');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-
-        let currentEmails = [];
-
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', () => modal.classList.add('hidden'));
-        }
-
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => {
-                const subject = emailSubjectEl.textContent.replace('Subject: ', '');
-                const body = emailBodyEl.textContent;
-                navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`).then(() => {
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = "Copied! 👍";
-                    setTimeout(() => copyBtn.textContent = originalText, 2000);
-                });
-            });
-        }
-
-        tabBtns.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                if (!currentEmails[index]) return;
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                emailSubjectEl.textContent = `Subject: ${currentEmails[index].subject}`;
-                emailBodyEl.textContent = currentEmails[index].body;
-            });
-        });
-
-        // Listen for pitch modal open event
-        document.addEventListener('open-pitch-modal', async (e) => {
-            const { label, metrics } = e.detail;
-
-            modal.classList.remove('hidden');
-            emailBodyEl.textContent = "Asking Gemini to write the perfect pitch...";
-            emailSubjectEl.textContent = "Subject: ...";
-            copyBtn.disabled = true;
-
-            try {
-                const variants = await generatePitch(label, metrics);
-                currentEmails = variants;
-
-                // Default to first variant
-                if (currentEmails[0]) {
-                    emailSubjectEl.textContent = `Subject: ${currentEmails[0].subject}`;
-                    emailBodyEl.textContent = currentEmails[0].body;
-                }
-                copyBtn.disabled = false;
-            } catch (err) {
-                emailBodyEl.textContent = "Error generating pitch. Please try again.";
-                console.error(err);
-            }
-        });
+        initPitchModal();
+    });
+} else {
+    // On analysis.html, init modals after DOM
+    document.addEventListener('DOMContentLoaded', () => {
+        initPitchModal();
     });
 }
