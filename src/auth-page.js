@@ -4,12 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('auth-form');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
-    const submitBtn = document.getElementById('submit-btn');
-    const toggleBtn = document.getElementById('toggle-btn');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const toggleBtn = document.getElementById('auth-toggle-btn');
     const title = document.getElementById('auth-title');
     const subtitle = document.getElementById('auth-subtitle');
-    const errorMsg = document.getElementById('auth-error');
-    const successMsg = document.getElementById('auth-success');
+    const toggleText = document.getElementById('auth-toggle-text');
+    const messageEl = document.getElementById('auth-message');
 
     // State
     let isLogin = true;
@@ -24,27 +24,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function showMessage(text, type) {
+        messageEl.textContent = text;
+        messageEl.className = `auth-message ${type}`;
+        messageEl.classList.remove('hidden');
+    }
+
+    function hideMessage() {
+        messageEl.classList.add('hidden');
+    }
+
     // Toggle Mode
     toggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
         isLogin = !isLogin;
 
         if (isLogin) {
-            title.textContent = "Welcome Back";
-            subtitle.textContent = "Login to your producer dashboard";
-            submitBtn.textContent = "Login";
-            document.getElementById('toggle-text').textContent = "Don't have an account?";
+            title.textContent = "Welcome back";
+            subtitle.textContent = "Sign in to your account";
+            submitBtn.textContent = "Sign In";
+            toggleText.textContent = "Don't have an account?";
             toggleBtn.textContent = "Sign Up";
         } else {
-            title.textContent = "Create Account";
-            subtitle.textContent = "Join the future of demo pitching";
-            submitBtn.textContent = "Sign Up";
-            document.getElementById('toggle-text').textContent = "Already have an account?";
-            toggleBtn.textContent = "Login";
+            title.textContent = "Create account";
+            subtitle.textContent = "Start managing your demos";
+            submitBtn.textContent = "Create Account";
+            toggleText.textContent = "Already have an account?";
+            toggleBtn.textContent = "Sign In";
         }
 
-        errorMsg.classList.add('hidden');
-        successMsg.classList.add('hidden');
+        hideMessage();
     });
 
     // Handle Submit
@@ -53,25 +62,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const email = emailInput.value;
         const password = passwordInput.value;
 
-        errorMsg.classList.add('hidden');
-        successMsg.classList.add('hidden');
+        hideMessage();
         submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
         submitBtn.textContent = "Processing...";
 
         try {
             if (isLogin) {
-                // LOGIN
                 const { data, error } = await window.supabaseClient.auth.signInWithPassword({
                     email,
                     password
                 });
 
                 if (error) throw error;
-
                 window.location.href = 'dashboard.html';
 
             } else {
-                // REGISTER
                 const { data, error } = await window.supabaseClient.auth.signUp({
                     email,
                     password
@@ -80,21 +86,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (error) throw error;
 
                 if (data.session) {
-                    // Immediate login (if email confirmation disabled)
                     window.location.href = 'dashboard.html';
                 } else {
-                    // Email confirmation needed
-                    successMsg.textContent = "Check your email for the confirmation link!";
-                    successMsg.classList.remove('hidden');
+                    showMessage("Check your email for the confirmation link.", "success");
                     submitBtn.disabled = false;
-                    submitBtn.textContent = "Sign Up";
+                    submitBtn.textContent = originalText;
                 }
             }
         } catch (err) {
-            errorMsg.textContent = err.message;
-            errorMsg.classList.remove('hidden');
+            showMessage(err.message, "error");
             submitBtn.disabled = false;
-            submitBtn.textContent = isLogin ? "Login" : "Sign Up";
+            submitBtn.textContent = originalText;
         }
     });
 

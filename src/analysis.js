@@ -141,6 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Genre Select - enable/disable analyze button
+    const genreSelect = document.getElementById('genre-select');
+    genreSelect.addEventListener('change', () => {
+        if (window.currentAudioFile && genreSelect.value) {
+            analyzeBtn.disabled = false;
+        }
+    });
+
     function handleFiles(files) {
         if (files.length === 0) return;
 
@@ -171,6 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Prepare for analysis
         window.currentAudioFile = file;
+
+        // Enable analyze button if genre is selected
+        if (genreSelect.value) {
+            analyzeBtn.disabled = false;
+        }
     }
 
     // Analysis Logic

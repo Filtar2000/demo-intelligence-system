@@ -6,10 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analysis - Demo Intelligence System</title>
 
-    <!-- Google Fonts: Inter -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- CSS -->
     <link rel="stylesheet" href="styles/main.css">
@@ -26,9 +28,9 @@
     <nav class="navbar">
         <div class="logo">DIS</div>
         <ul class="nav-links">
-            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="analysis.html" class="active">Analysis</a></li>
-            <li><a href="#">Label</a></li>
+            <li><a href="label-fit.html">Label Match</a></li>
             <li><a href="crm.html">CRM</a></li>
         </ul>
         <a href="#" class="btn-login" id="loginBtn">Login</a>
@@ -77,7 +79,7 @@
                     </select>
                 </div>
 
-                <button id="analyze-btn" class="btn-primary" disabled>Analyze Track</button>
+                <button id="analyze-btn" class="btn-primary">Analyze Track</button>
             </div>
         </div>
 
@@ -190,7 +192,7 @@
 
     <!-- Pitch Modal (Hidden) -->
     <div id="pitch-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel" style="max-width: 600px; padding: 30px;">
+        <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">AI Pitch Generator</h2>
                 <button id="close-modal" class="close-modal">&times;</button>

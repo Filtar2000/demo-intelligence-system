@@ -4,44 +4,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Intelligence System</title>
+    <title>DIS — Demo Intelligence System</title>
+    <meta name="description" content="Advanced analytics and label matching for electronic music producers.">
 
-    <!-- Google Fonts: Inter -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap"
+        rel="stylesheet">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="styles/main.css">
-
-    <!-- Supabase JS -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Supabase JS (via CDN for quick start, can be replaced with npm if needed) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
-
     <nav class="navbar">
         <div class="logo">DIS</div>
         <ul class="nav-links">
-            <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="analysis.html">Analysis</a></li>
-            <li><a href="#" data-page="label">Label</a></li>
-            <li><a href="#" data-page="crm">CRM</a></li>
+            <li><a href="label-fit.html">Label Match</a></li>
+            <li><a href="crm.html">CRM</a></li>
         </ul>
-        <a href="#" class="btn-login" id="loginBtn">Login</a>
+        <a href="auth.html" class="btn-login" id="loginBtn">Login</a>
     </nav>
 
-    <main id="app">
+    <main>
         <section class="hero">
-            <h1>Demo Intelligence System</h1>
-            <p>Advanced analytics and management for electronic music producers.</p>
+            <h1>Analyze. Match.<br><span class="accent">Get Signed.</span></h1>
+            <p>Track-level analytics, smart label matching, and AI-powered pitching — everything a producer needs to
+                land their next release.</p>
+            <div class="hero-actions">
+                <a href="analysis.html" class="btn-primary" style="text-decoration: none;">Start Analysis</a>
+                <a href="auth.html" class="btn-secondary" style="text-decoration: none;">Create Account</a>
+            </div>
         </section>
     </main>
 
-    <!-- App Logic -->
     <script type="module" src="src/app.js"></script>
 </body>
 
