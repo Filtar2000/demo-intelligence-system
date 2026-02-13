@@ -383,9 +383,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 labelsSection.classList.remove('hidden');
                 labelsSection.scrollIntoView({ behavior: 'smooth' });
 
-                // Show subtitle with current filters
+                // Show subtitle with current filters (capitalize values)
                 const subtitle = document.getElementById('labels-subtitle');
-                if (subtitle) subtitle.textContent = `Genre: ${selectedGenre} · Mood: ${selectedMood} · Energy: ${selectedEnergy}`;
+                if (subtitle) {
+                    const cap = s => s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                    subtitle.textContent = `Genre: ${cap(selectedGenre)} · Mood: ${cap(selectedMood)} · Energy: ${cap(selectedEnergy)}`;
+                }
 
                 const labelsGrid = document.getElementById('labels-grid');
                 labelsGrid.innerHTML = '<div class="loader"></div>';
