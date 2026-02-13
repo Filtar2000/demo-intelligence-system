@@ -1,16 +1,13 @@
 import './app.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Stats Elements
     const statAnalyses = document.getElementById('stat-analyses');
     const statSubmissions = document.getElementById('stat-submissions');
     const statReplied = document.getElementById('stat-replied');
 
-    // List Elements
     const recentAnalysesList = document.getElementById('recent-analyses-list');
     const recentSubmissionsList = document.getElementById('recent-submissions-list');
 
-    // Modal Control
     const btnRegister = document.getElementById('btn-register-submission');
     const modal = document.getElementById('submission-modal');
     const closeModal = document.getElementById('close-submission-modal');
@@ -18,29 +15,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!window.supabaseClient) return;
 
-    // 1. Fetch User
     const { data: { user } } = await window.supabaseClient.auth.getUser();
-    if (!user) return; // app.js handles redirect
+    if (!user) return;
 
-    // 2. Fetch Data
+    // Welcome message
+    const welcomeMsg = document.getElementById('welcome-msg');
+    if (welcomeMsg && user.email) {
+        const name = user.email.split('@')[0];
+        welcomeMsg.textContent = `Welcome, ${name}`;
+    }
+
     await loadDashboardData();
 
-    // 3. Modal Events
-    btnRegister.addEventListener('click', () => {
-        modal.classList.remove('hidden');
+    // Modal
+    btnRegister.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeModal.addEventListener('click', () => modal.classList.add('hidden'));
+
+    // Outside click to close modal
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.classList.add('hidden');
     });
 
-    closeModal.addEventListener('click', () => {
-        modal.classList.add('hidden');
-    });
-
-    // 4. Handle Submission Registration
     subForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const labelName = document.getElementById('sub-label').value;
         const trackName = document.getElementById('sub-track').value;
         const status = document.getElementById('sub-status').value;
+
+        const submitBtn = subForm.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
 
         try {
             const { error } = await window.supabaseClient
@@ -54,22 +59,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (error) throw error;
 
-            // Success
             modal.classList.add('hidden');
             subForm.reset();
-            // Reload data to show new submission
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save';
             await loadDashboardData();
 
         } catch (err) {
             console.error('Error adding submission:', err);
             alert('Failed to add submission');
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save';
         }
     });
 
-
     async function loadDashboardData() {
         try {
-            // Fetch Analyses
             const { data: analyses, error: errA } = await window.supabaseClient
                 .from('analyses')
                 .select('*')
@@ -78,7 +83,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (errA) throw errA;
 
-            // Fetch Submissions
             const { data: submissions, error: errS } = await window.supabaseClient
                 .from('submissions')
                 .select('*')
@@ -87,19 +91,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (errS) throw errS;
 
-            // --- UPDATE STATS ---
+            // Stats
             statAnalyses.textContent = analyses.length;
             statSubmissions.textContent = submissions.length;
+            statReplied.textContent = submissions.filter(s => s.status === 'replied').length;
 
-            const repliedCount = submissions.filter(s => s.status === 'replied').length;
-            statReplied.textContent = repliedCount;
-
-
-            // --- RENDER LISTS ---
+            // Lists
             renderAnalysesList(analyses.slice(0, 5));
             renderSubmissionsList(submissions.slice(0, 5));
 
-            // --- RENDER CHART ---
+            // Chart
             renderChart(analyses.slice(0, 10).reverse());
 
         } catch (error) {
@@ -110,16 +111,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderAnalysesList(items) {
         recentAnalysesList.innerHTML = '';
         if (items.length === 0) {
-            recentAnalysesList.innerHTML = '<div class="loading-text">No analyses yet.</div>';
+            recentAnalysesList.innerHTML = '<div class="loading-text">No analyses yet. Start by analyzing a track.</div>';
             return;
         }
 
         items.forEach(item => {
             const date = new Date(item.created_at).toLocaleDateString();
             const score = item.score;
-            let color = '#f44336'; // Red < 40
-            if (score > 40) color = '#ffc107'; // Yellow 40-70
-            if (score > 70) color = '#4caf50'; // Green > 70
+
+            // Use design system colors
+            let color, bg;
+            if (score > 70) {
+                color = '#3ecf8e'; bg = 'rgba(62, 207, 142, 0.1)';
+            } else if (score > 40) {
+                color = '#e8aa42'; bg = 'rgba(232, 170, 66, 0.1)';
+            } else {
+                color = '#e54d5e'; bg = 'rgba(229, 77, 94, 0.1)';
+            }
 
             const div = document.createElement('div');
             div.className = 'activity-item';
@@ -128,7 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <h4>${item.filename}</h4>
                     <p>${date}</p>
                 </div>
-                <div class="score-pip" style="color: ${color}; border: 1px solid ${color}; background: rgba(0,0,0,0.2);">
+                <div class="score-pip" style="color: ${color}; background: ${bg};">
                     ${score}
                 </div>
             `;
@@ -139,19 +147,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderSubmissionsList(items) {
         recentSubmissionsList.innerHTML = '';
         if (items.length === 0) {
-            recentSubmissionsList.innerHTML = '<div class="loading-text">No registered submissions.</div>';
+            recentSubmissionsList.innerHTML = '<div class="loading-text">No submissions registered yet.</div>';
             return;
         }
 
         items.forEach(item => {
             const date = new Date(item.sent_at).toLocaleDateString();
             let badgeClass = 'status-sent';
-            let statusLabel = item.status;
+            let statusLabel = 'Sent';
 
             if (item.status === 'replied') { badgeClass = 'status-replied'; statusLabel = 'Replied'; }
             else if (item.status === 'signed') { badgeClass = 'status-signed'; statusLabel = 'Signed'; }
             else if (item.status === 'rejected') { badgeClass = 'status-rejected'; statusLabel = 'Rejected'; }
-            else { badgeClass = 'status-sent'; statusLabel = 'Sent'; }
 
             const div = document.createElement('div');
             div.className = 'activity-item';
@@ -167,19 +174,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function renderChart(items) {
-        // Destroy existing chart if any (to prevent overlap on reload)
         const canvas = document.getElementById('scoreChart');
         if (!canvas) return;
-
-        // Reset canvas if needed for Chart.js 
-        // (Simpler: just create new one if the ID logic handles it, 
-        // but Chart.js attaches to canvas. We should check if window.myChart exists)
 
         if (window.myDashboardChart) {
             window.myDashboardChart.destroy();
         }
 
-        const labels = items.map(item => item.filename.substring(0, 15) + (item.filename.length > 15 ? '...' : ''));
+        if (items.length === 0) {
+            canvas.parentElement.querySelector('.panel-header .panel-title').textContent = 'Score History';
+            return;
+        }
+
+        const labels = items.map(item => {
+            const name = item.filename || 'track';
+            return name.length > 12 ? name.substring(0, 12) + '…' : name;
+        });
         const data = items.map(item => item.score);
 
         window.myDashboardChart = new Chart(canvas, {
@@ -189,29 +199,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                 datasets: [{
                     label: 'Score',
                     data: data,
-                    borderColor: '#4caf50',
-                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    borderColor: '#e8aa42',
+                    backgroundColor: 'rgba(232, 170, 66, 0.08)',
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointBackgroundColor: '#fff'
+                    pointBackgroundColor: '#e8aa42',
+                    pointBorderColor: '#0a0c10',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 6
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1d2230',
+                        titleColor: '#eaedf3',
+                        bodyColor: '#8a90a0',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        padding: 10
+                    }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
                         max: 100,
-                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                        ticks: { color: '#888' }
+                        grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                        ticks: { color: '#555b6e', font: { size: 11 } },
+                        border: { display: false }
                     },
                     x: {
-                        ticks: { color: '#888', font: { size: 10 } }
+                        grid: { display: false },
+                        ticks: { color: '#555b6e', font: { size: 10 } },
+                        border: { display: false }
                     }
                 }
             }

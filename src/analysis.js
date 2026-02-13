@@ -54,12 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function highlight(e) {
         dropZone.classList.add('highlight');
-        dropZone.style.borderColor = "#fff";
+        dropZone.style.borderColor = "var(--accent)";
     }
 
     function unhighlight(e) {
         dropZone.classList.remove('highlight');
-        dropZone.style.borderColor = "var(--accent-color)";
+        dropZone.style.borderColor = "";
     }
 
     dropZone.addEventListener('drop', handleDrop, false);
@@ -321,9 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBar(barEnergy, metrics.energyStdDev > 0.05, Math.min(100, metrics.energyStdDev * 500));
 
             function updateBar(element, isGood, percent) {
+                if (!element) return;
                 element.style.width = `${Math.max(5, Math.min(100, percent))}%`;
-                element.style.backgroundColor = isGood ? '#4caf50' : '#f44336';
-                if (!isGood && percent > 0 && percent < 100) element.style.backgroundColor = '#ffc107'; // yellow for mid
+                element.style.backgroundColor = isGood ? 'var(--accent)' : 'rgba(255,255,255,0.3)';
             }
 
             function mapRange(value, inMin, inMax, outMin, outMax) {
@@ -373,6 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
+                // Save metrics to localStorage for label-fit.html standalone page
+                localStorage.setItem('trackMetrics', JSON.stringify({ metrics, score }));
+
                 // Show Label Section
                 const labelsSection = document.getElementById('labels-section');
                 labelsSection.classList.remove('hidden');
@@ -382,21 +385,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 labelsGrid.innerHTML = '<div class="loader"></div>';
 
                 try {
-                    // Fetch all labels (filtering by genre would be better on DB, but let's do simple fetch first)
-                    // Efficient: Select labels where subgenres contains selectedGenre
                     const { data: labels, error } = await window.supabaseClient
                         .from('labels')
-                        .select('*'); // We filter client-side for "contains" if jsonb or array is tricky, or just fetching all is fine for <1000 labels
+                        .select('*');
 
                     if (error) throw error;
 
-                    // Filter by Genre (Simple inclusion)
-                    const relevantLabels = labels.filter(l =>
-                        l.subgenres && Array.isArray(l.subgenres) &&
-                        l.subgenres.some(g => g.toLowerCase().includes(selectedGenre.toLowerCase()))
-                    );
+                    if (!labels || labels.length === 0) {
+                        labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">No labels found in the database. Please add labels first.</p>';
+                        return;
+                    }
 
-                    // Import matching logic dynamically
+                    // Filter by genre (flexible matching)
+                    let relevantLabels = labels.filter(l => {
+                        if (!l.subgenres) return false;
+                        const subs = Array.isArray(l.subgenres) ? l.subgenres : [l.subgenres];
+                        return subs.some(g => {
+                            const gLower = String(g).toLowerCase();
+                            const selLower = selectedGenre.toLowerCase();
+                            // Match if either contains the other, or share a keyword
+                            return gLower.includes(selLower) || selLower.includes(gLower) ||
+                                selLower.split(' ').some(word => word.length > 3 && gLower.includes(word));
+                        });
+                    });
+
+                    // FALLBACK: if no genre match, use ALL labels (sorted by score)
+                    if (relevantLabels.length === 0) {
+                        console.log(`No genre-specific labels for "${selectedGenre}", showing all labels by match score.`);
+                        relevantLabels = labels;
+                    }
+
+                    // Import matching logic
                     const { calculateMatchScore, renderLabels } = await import('./label-matcher.js');
 
                     // Calculate Scores
@@ -410,14 +429,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const topLabels = matchedLabels.slice(0, 20);
 
                     if (topLabels.length === 0) {
-                        labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">No matching labels found for this genre and analysis.</p>';
+                        labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">No matching labels found.</p>';
                     } else {
                         renderLabels(topLabels, metrics, 'labels-grid');
                     }
 
                 } catch (err) {
                     console.error('Error finding labels:', err);
-                    labelsGrid.innerHTML = '<p class="text-danger">Error loading labels.</p>';
+                    labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">Error loading labels. Check console for details.</p>';
                 }
             };
 
