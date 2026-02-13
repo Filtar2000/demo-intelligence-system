@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Force background for preview if main.css fails */
+        body {
+            min-height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar glass-panel">
+        <div class="logo">DIS</div>
+        <ul class="nav-links">
+            <li><a href="#" class="active">Dashboard</a></li>
+            <li><a href="#">Analysis</a></li>
+            <li><a href="#">Label Match</a></li>
+            <li><a href="#">CRM</a></li>
+        </ul>
+        <a href="#" class="btn-login">Logout</a>
+    </nav>
+
+    <main class="analysis-container">
+        <section class="analysis-header">
+            <h1 id="welcome-msg">Welcome, Producer</h1>
+            <p>Your demo activity hub.</p>
+        </section>
+
+        <!-- Stats Grid -->
+        <div class="dashboard-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; margin-bottom: 40px;">
+            <div class="stat-card glass-panel">
+                <span class="stat-value">12</span>
+                <span class="stat-label">Analyses Performed</span>
+            </div>
+            <div class="stat-card glass-panel">
+                <span class="stat-value">8</span>
+                <span class="stat-label">Demos Sent</span>
+            </div>
+            <div class="stat-card glass-panel">
+                <span class="stat-value">3</span>
+                <span class="stat-label">Replied</span>
+            </div>
+        </div>
+
+        <div class="dashboard-layout" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; width: 100%;">
+            <!-- Left Column -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <div class="panel glass-panel" style="padding: 20px;">
+                    <div class="panel-header" style="margin-bottom: 20px;">
+                        <span class="panel-title">Score History</span>
+                    </div>
+                    <div style="height: 300px;"><canvas id="scoreChart"></canvas></div>
+                </div>
+
+                <div class="panel glass-panel" style="padding: 20px;">
+                    <div class="panel-header"
+                        style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                        <span class="panel-title">Latest Analyses</span>
+                        <a href="#" class="btn-link">View All</a>
+                    </div>
+                    <div class="activity-list">
+                        <div class="activity-item"
+                            style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <h4>Summer Vibes.wav</h4>
+                                <p style="color: #888; font-size: 0.9rem;">10/05/2023</p>
+                            </div>
+                            <div style="color: #4caf50; font-weight: bold;">85</div>
+                        </div>
+                        <div class="activity-item"
+                            style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <h4>Deep House Idea.mp3</h4>
+                                <p style="color: #888; font-size: 0.9rem;">09/05/2023</p>
+                            </div>
+                            <div style="color: #ffc107; font-weight: bold;">55</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <div class="panel glass-panel" style="padding: 20px;">
+                    <div class="panel-header" style="margin-bottom: 20px;">
+                        <span class="panel-title">Quick Actions</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button class="btn-primary">Analyze New Track</button>
+                        <button class="btn-secondary">Register Submission</button>
+                    </div>
+                </div>
+
+                <div class="panel glass-panel" style="padding: 20px;">
+                    <div class="panel-header" style="margin-bottom: 20px;">
+                        <span class="panel-title">Recent Submissions</span>
+                    </div>
+                    <div class="activity-list">
+                        <div class="activity-item"
+                            style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <div>
+                                <h4>Spinnin' Records</h4>
+                                <p style="color: #888; font-size: 0.9rem;">Sent 2 days ago</p>
+                            </div>
+                            <span class="status-sent">Sent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Track 1', 'Track 2', 'Track 3', 'Track 4', 'Track 5'],
+                datasets: [{
+                    label: 'Score',
+                    data: [65, 59, 80, 81, 56],
+                    borderColor: '#6C63FF',
+                    backgroundColor: 'rgba(108, 99, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#888' } },
+                    x: { grid: { display: false }, ticks: { color: '#888' } }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

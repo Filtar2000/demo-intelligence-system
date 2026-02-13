@@ -79,6 +79,68 @@ document.addEventListener('DOMContentLoaded', () => {
         handleFiles(this.files);
     });
 
+    // Pitch Modal Logic (Listen for event from label-matcher module)
+    document.addEventListener('open-pitch-modal', async (e) => {
+        const { label, metrics } = e.detail;
+
+        // Import generator dynamically
+        const { generatePitch } = await import('./demo-generator.js');
+
+        const modal = document.getElementById('pitch-modal');
+        const emailSubjectEl = document.getElementById('email-subject');
+        const emailBodyEl = document.getElementById('email-body');
+        const copyBtn = document.getElementById('copy-btn');
+        const closeBtn = document.getElementById('close-modal');
+
+        modal.classList.remove('hidden');
+        emailBodyEl.textContent = "Asking Gemini to write the perfect pitch...";
+        emailSubjectEl.textContent = "Subject: ...";
+        copyBtn.disabled = true;
+
+        // Close Logic
+        closeBtn.onclick = () => modal.classList.add('hidden');
+        window.onclick = (event) => { if (event.target === modal) modal.classList.add('hidden'); };
+
+        try {
+            const variants = await generatePitch(label, metrics);
+            let currentEmails = variants;
+
+            // Tab Logic
+            document.querySelectorAll('.tab-btn').forEach((btn, index) => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    if (currentEmails[index]) {
+                        emailSubjectEl.textContent = `Subject: ${currentEmails[index].subject}`;
+                        emailBodyEl.textContent = currentEmails[index].body;
+                    }
+                };
+            });
+
+            // Initial Render (Formal)
+            if (currentEmails[0]) {
+                emailSubjectEl.textContent = `Subject: ${currentEmails[0].subject}`;
+                emailBodyEl.textContent = currentEmails[0].body;
+            }
+            copyBtn.disabled = false;
+
+            // Copy Logic
+            copyBtn.onclick = () => {
+                const subject = emailSubjectEl.textContent.replace('Subject: ', '');
+                const body = emailBodyEl.textContent;
+                navigator.clipboard.writeText(`Subject: ${subject}\n\n${body}`).then(() => {
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = "Copied! 👍";
+                    setTimeout(() => copyBtn.textContent = originalText, 2000);
+                });
+            };
+
+        } catch (err) {
+            console.error(err);
+            emailBodyEl.textContent = "Error generating pitch.";
+        }
+    });
+
     function handleFiles(files) {
         if (files.length === 0) return;
 
@@ -277,6 +339,9 @@ document.addEventListener('DOMContentLoaded', () => {
             analyzeBtn.textContent = 'Analyze Track';
             analyzeBtn.disabled = false;
 
+            // Enable Label Finding
+            document.getElementById('find-labels-btn').disabled = false;
+
             // ANIMATE SCORE
             animateScore(score);
 
@@ -287,17 +352,60 @@ document.addEventListener('DOMContentLoaded', () => {
             const findLabelsBtn = document.getElementById('find-labels-btn');
             findLabelsBtn.disabled = false;
 
-            findLabelsBtn.onclick = () => {
-                // Save metrics to local storage for the next page to use
-                const dataToSave = {
-                    metrics: metrics,
-                    score: score,
-                    timestamp: new Date().toISOString()
-                };
-                localStorage.setItem('trackMetrics', JSON.stringify(dataToSave));
+            findLabelsBtn.onclick = async () => {
+                const genreSelect = document.getElementById('genre-select');
+                const selectedGenre = genreSelect.value;
+                if (!selectedGenre) {
+                    alert('Please select a genre to find compatible labels.');
+                    return;
+                }
 
-                // Navigate
-                window.location.href = 'label-fit.html';
+                // Show Label Section
+                const labelsSection = document.getElementById('labels-section');
+                labelsSection.classList.remove('hidden');
+                labelsSection.scrollIntoView({ behavior: 'smooth' });
+
+                const labelsGrid = document.getElementById('labels-grid');
+                labelsGrid.innerHTML = '<div class="loader"></div>';
+
+                try {
+                    // Fetch all labels (filtering by genre would be better on DB, but let's do simple fetch first)
+                    // Efficient: Select labels where subgenres contains selectedGenre
+                    const { data: labels, error } = await window.supabaseClient
+                        .from('labels')
+                        .select('*'); // We filter client-side for "contains" if jsonb or array is tricky, or just fetching all is fine for <1000 labels
+
+                    if (error) throw error;
+
+                    // Filter by Genre (Simple inclusion)
+                    const relevantLabels = labels.filter(l =>
+                        l.subgenres && Array.isArray(l.subgenres) &&
+                        l.subgenres.some(g => g.toLowerCase().includes(selectedGenre.toLowerCase()))
+                    );
+
+                    // Import matching logic dynamically
+                    const { calculateMatchScore, renderLabels } = await import('./label-matcher.js');
+
+                    // Calculate Scores
+                    const matchedLabels = relevantLabels.map(label => {
+                        const matchScore = calculateMatchScore(metrics, label);
+                        return { ...label, matchScore };
+                    });
+
+                    // Sort & Slice
+                    matchedLabels.sort((a, b) => b.matchScore - a.matchScore);
+                    const topLabels = matchedLabels.slice(0, 20);
+
+                    if (topLabels.length === 0) {
+                        labelsGrid.innerHTML = '<p class="text-muted" style="text-align:center;">No matching labels found for this genre and analysis.</p>';
+                    } else {
+                        renderLabels(topLabels, metrics, 'labels-grid');
+                    }
+
+                } catch (err) {
+                    console.error('Error finding labels:', err);
+                    labelsGrid.innerHTML = '<p class="text-danger">Error loading labels.</p>';
+                }
             };
 
         } catch (err) {

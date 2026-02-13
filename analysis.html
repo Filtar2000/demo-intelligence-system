@@ -56,7 +56,28 @@
             </div>
             <div id="file-info" class="file-info hidden">
                 <p id="filename-display">track_name.mp3</p>
-                <button id="analyze-btn" class="btn-primary">Analyze Track</button>
+
+                <!-- Genre Selection -->
+                <div class="genre-selector">
+                    <label for="genre-select">Select Genre (Required for Label Matching):</label>
+                    <select id="genre-select">
+                        <option value="" disabled selected>-- Choose Subgenre --</option>
+                        <option value="melodic techno">Melodic Techno</option>
+                        <option value="melodic house">Melodic House</option>
+                        <option value="peak-time techno">Peak-time Techno</option>
+                        <option value="hard techno">Hard Techno</option>
+                        <option value="minimal">Minimal / Deep Tech</option>
+                        <option value="tech house">Tech House</option>
+                        <option value="afro house">Afro House</option>
+                        <option value="organic house">Organic House</option>
+                        <option value="indie dance">Indie Dance</option>
+                        <option value="nu disco">Nu Disco</option>
+                        <option value="industrial techno">Industrial Techno</option>
+                        <option value="ambient">Ambient / Experimental</option>
+                    </select>
+                </div>
+
+                <button id="analyze-btn" class="btn-primary" disabled>Analyze Track</button>
             </div>
         </div>
 
@@ -156,8 +177,39 @@
             <div class="action-area">
                 <button id="find-labels-btn" class="btn-primary" disabled>Find Compatible Labels →</button>
             </div>
+
+            <!-- Label Matches Section (Hidden initially) -->
+            <section id="labels-section" class="labels-section hidden">
+                <h2 class="section-title">Compatible Labels</h2>
+                <div id="labels-grid" class="labels-grid">
+                    <!-- Label Cards injected here -->
+                </div>
+            </section>
         </section>
     </main>
+
+    <!-- Pitch Modal (Hidden) -->
+    <div id="pitch-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel" style="max-width: 600px; padding: 30px;">
+            <div class="modal-header">
+                <h2 class="modal-title">AI Pitch Generator</h2>
+                <button id="close-modal" class="close-modal">&times;</button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active">Formal</button>
+                <button class="tab-btn">Casual</button>
+                <button class="tab-btn">Short</button>
+            </div>
+
+            <div class="email-preview">
+                <div id="email-subject" class="email-subject">Subject: ...</div>
+                <div id="email-body" class="email-body">Generating...</div>
+            </div>
+
+            <button id="copy-btn" class="btn-primary full-width" style="margin-top: 15px;">Copy to Clipboard</button>
+        </div>
+    </div>
 
     <script type="module" src="src/analysis.js"></script>
 </body>

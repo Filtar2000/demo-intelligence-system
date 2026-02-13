@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function calculateMatchScore(trackMetrics, label) {
+export function calculateMatchScore(trackMetrics, label) {
     let score = 0;
 
     // --- 1. BPM Compatibility (35 pts) ---
@@ -126,29 +126,16 @@ function calculateMatchScore(trackMetrics, label) {
     }
 
     // --- 4. Vocal Match (15 pts) ---
-    // We don't have vocal detection in Meyda easily without complex models.
-    // However, the prompt asks: "confronta la presenza/assenza vocal".
-    // Since our current analysis DOES NOT detect vocals, we will assume:
-    // If the label accepts BOTH vocal and non-vocal (or if 'vocal' column implies 'vocal heavy'),
-    // we need to know if the TRACK is vocal.
+    // We update this to use the passed metrics.vocalPresence if available
+    const trackHasVocals = trackMetrics.vocalPresence > 40;
+    const labelHasVocals = label.vocal || false; // Database column 'vocal' boolean
 
-    // PROBLEM: We don't have 'is_vocal' in trackMetrics from analysis.js.
-    // SOLUTION: For now, I'll default to awarding points if label.vocal is FALSE (instrumental safe) 
-    // OR if we assume the track is instrumental by default.
-    // BUT the prompt explicitly says: "15pt se la presenza/assenza vocal coincide."
-    // Since I cannot detect vocals with the current script, I will assume the track is 'Instrumental' (vocal = false) for now
-    // UNLESS we add a UI toggle for the user to say "Is this a vocal track?".
+    // Logic: If label expects vocals (true) and track has vocals -> Match
+    // If label expects NO vocals (false) and track has NO vocals -> Match
+    // If mismatch -> 0 points
 
-    // NOTE: For this iteration, I will assume matching 'vocal' boolean from label 
-    // against a hardcoded 'false' (Instrumental) or random, OR better:
-    // I will treat this as "Label accepts demos? (+15)" to be nice, 
-    // OR I will default to 15 points to avoid penalizing for a missing feature.
-
-    // CORRECT APPROACH based on constraints:
-    // I will add a `hasVocals` property to metrics in analysis.js (default false for now) 
-    // or just assume false. Let's assume False for now as Meyda doesn't detect voice.
-    const trackHasVocals = false; // Placeholder
-    const labelHasVocals = label.vocal || false;
+    // However, if label.vocal is NULL or undefined, we might be lenient. 
+    // Let's assume strict matching for now based on prompt.
 
     if (trackHasVocals === labelHasVocals) {
         score += 15;
@@ -157,8 +144,10 @@ function calculateMatchScore(trackMetrics, label) {
     return Math.round(score);
 }
 
-function renderLabels(labels, metrics) {
-    const grid = document.getElementById('labels-grid');
+export function renderLabels(labels, metrics, containerId = 'labels-grid') {
+    const grid = document.getElementById(containerId);
+    if (!grid) return;
+
     grid.innerHTML = '';
 
     labels.forEach(label => {
@@ -196,8 +185,17 @@ function renderLabels(labels, metrics) {
         `;
 
         // Attach event listener immediately to the button
+        // Note: we need openPitchModal to be available. 
+        // We will attach a custom event or pass a callback if needed, 
+        // but for now let's hope openPitchModal is in scope or we export it too.
+        // Actually, importing this in analysis.js won't have openPitchModal defined there.
+        // We should export openPitchModal too or move it.
         const btn = card.querySelector('.generate-pitch-btn');
-        btn.addEventListener('click', () => openPitchModal(label, metrics));
+        btn.addEventListener('click', () => {
+            // Dispatch event so main page can handle modal
+            const event = new CustomEvent('open-pitch-modal', { detail: { label, metrics } });
+            document.dispatchEvent(event);
+        });
 
         grid.appendChild(card);
     });
