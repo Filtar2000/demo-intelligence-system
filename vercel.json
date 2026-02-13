@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/auth", "destination": "/auth.html" },
+    { "source": "/analysis", "destination": "/analysis.html" },
+    { "source": "/label-fit", "destination": "/label-fit.html" },
+    { "source": "/crm", "destination": "/crm.html" }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}
