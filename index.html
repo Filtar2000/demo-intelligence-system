@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DIS — Demo Intelligence System</title>
-    <meta name="description" content="Advanced analytics and label matching for electronic music producers.">
+    <title>DIS — Demo Intelligence System | Smart Label Matching for Producers</title>
+    <meta name="description"
+        content="Analyze your tracks, find the perfect labels, and generate AI-powered pitches. The ultimate tool for electronic music producers.">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,33 +15,739 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap"
         rel="stylesheet">
 
+    <!-- CSS -->
     <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* ═══ LANDING PAGE SPECIFIC STYLES ═══ */
+
+        .landing-hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--space-3xl) var(--space-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .landing-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 20%, rgba(232, 170, 66, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 70% 80%, rgba(77, 166, 232, 0.04) 0%, transparent 50%);
+            animation: heroGlow 15s ease-in-out infinite alternate;
+        }
+
+        @keyframes heroGlow {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            100% {
+                transform: translate(-3%, 3%) rotate(5deg);
+            }
+        }
+
+        .landing-hero>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 100px;
+            background: var(--accent-soft);
+            border: 1px solid var(--border-accent);
+            color: var(--accent);
+            font-size: 0.78rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            margin-bottom: var(--space-lg);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-badge .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(0.8);
+            }
+        }
+
+        .landing-hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.2rem);
+            font-family: var(--font-display);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: var(--space-lg);
+            max-width: 700px;
+        }
+
+        .landing-hero h1 .accent {
+            color: var(--accent);
+        }
+
+        .landing-hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent), #4da6e8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 520px;
+            margin: 0 auto var(--space-xl);
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: var(--space-md);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .hero-actions .btn-primary {
+            padding: 14px 32px;
+            font-size: 1rem;
+        }
+
+        .hero-actions .btn-secondary {
+            padding: 14px 32px;
+            font-size: 1rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: var(--space-2xl);
+            margin-top: var(--space-3xl);
+            padding-top: var(--space-xl);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .hero-stat-label {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ═══ FEATURES SECTION ═══ */
+
+        .features-section {
+            padding: var(--space-3xl) var(--space-lg);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .section-header .overline {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+        }
+
+        .section-header h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin: var(--space-sm) auto 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-lg);
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-md);
+            background: var(--accent-soft);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: var(--space-md);
+        }
+
+        .feature-card h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: var(--space-sm);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            margin-top: var(--space-md);
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 100px;
+            font-family: var(--font-mono);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .tag-free {
+            background: rgba(62, 207, 142, 0.12);
+            color: var(--success);
+        }
+
+        .tag-pro {
+            background: rgba(232, 170, 66, 0.12);
+            color: var(--accent);
+        }
+
+        /* ═══ HOW IT WORKS ═══ */
+
+        .how-section {
+            padding: var(--space-3xl) var(--space-lg);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xl);
+            margin-top: var(--space-xl);
+        }
+
+        .step-item {
+            display: flex;
+            gap: var(--space-lg);
+            align-items: flex-start;
+        }
+
+        .step-number {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--accent);
+        }
+
+        .step-content h3 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* ═══ PRICING SECTION ═══ */
+
+        .pricing-section {
+            padding: var(--space-3xl) var(--space-lg);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-lg);
+            margin-top: var(--space-xl);
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            padding: var(--space-xl);
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(232, 170, 66, 0.1);
+            position: relative;
+        }
+
+        .pricing-card.featured::after {
+            content: 'RECOMMENDED';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 4px 16px;
+            border-radius: 100px;
+            background: var(--accent);
+            color: var(--text-inverse);
+            font-size: 0.65rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            letter-spacing: 0.1em;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--border-accent);
+        }
+
+        .pricing-tier {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+
+        .pricing-price {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: var(--space-sm) 0;
+        }
+
+        .pricing-price span {
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            font-weight: 400;
+        }
+
+        .pricing-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: var(--space-lg);
+            line-height: 1.5;
+        }
+
+        .pricing-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+            margin-bottom: var(--space-xl);
+            flex-grow: 1;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .pricing-features li .check {
+            color: var(--success);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .pricing-features li.disabled {
+            color: var(--text-tertiary);
+            text-decoration: line-through;
+            opacity: 0.5;
+        }
+
+        .pricing-card .btn-primary,
+        .pricing-card .btn-secondary {
+            width: 100%;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        /* ═══ CTA SECTION ═══ */
+
+        .cta-section {
+            text-align: center;
+            padding: var(--space-3xl) var(--space-lg);
+            margin: var(--space-2xl) var(--space-lg);
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-xl);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-section h2 {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: var(--space-sm);
+        }
+
+        .cta-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--space-lg);
+        }
+
+        /* ═══ FOOTER ═══ */
+
+        .landing-footer {
+            text-align: center;
+            padding: var(--space-xl) var(--space-lg);
+            border-top: 1px solid var(--border-subtle);
+            margin-top: var(--space-2xl);
+        }
+
+        .landing-footer p {
+            font-size: 0.78rem;
+            color: var(--text-tertiary);
+        }
+
+        .landing-footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* ═══ RESPONSIVE ═══ */
+
+        @media (max-width: 768px) {
+            .hero-stats {
+                gap: var(--space-lg);
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step-item {
+                flex-direction: column;
+                gap: var(--space-sm);
+            }
+
+            .landing-hero h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-stats {
+                flex-direction: column;
+                gap: var(--space-md);
+            }
+
+            .landing-hero {
+                padding: var(--space-2xl) var(--space-md);
+            }
+        }
+    </style>
 </head>
 
 <body>
+
     <nav class="navbar">
         <div class="logo">DIS</div>
         <ul class="nav-links">
-            <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="analysis.html">Analysis</a></li>
             <li><a href="label-fit.html">Label Match</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="crm.html">CRM</a></li>
         </ul>
         <a href="auth.html" class="btn-login" id="loginBtn">Login</a>
     </nav>
 
     <main>
-        <section class="hero">
-            <h1>Analyze. Match.<br><span class="accent">Get Signed.</span></h1>
-            <p>Track-level analytics, smart label matching, and AI-powered pitching — everything a producer needs to
-                land their next release.</p>
+
+        <!-- ═══ HERO ═══ -->
+        <section class="landing-hero">
+            <div class="hero-badge">
+                <span class="pulse"></span>
+                Built for electronic music producers
+            </div>
+
+            <h1>Analyze Your Track.<br><span class="gradient-text">Find Your Label.</span></h1>
+
+            <p class="hero-subtitle">
+                Upload your demo, get instant audio analysis, match with 700+ labels by genre, mood and energy — then
+                generate AI-powered pitch emails in seconds.
+            </p>
+
             <div class="hero-actions">
-                <a href="analysis.html" class="btn-primary" style="text-decoration: none;">Start Analysis</a>
-                <a href="auth.html" class="btn-secondary" style="text-decoration: none;">Create Account</a>
+                <a href="analysis.html" class="btn-primary" style="text-decoration: none;">Try Free Analysis →</a>
+                <a href="#pricing" class="btn-secondary" style="text-decoration: none;">View Plans</a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-value">700+</div>
+                    <div class="hero-stat-label">Labels</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">32</div>
+                    <div class="hero-stat-label">Genres</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">AI</div>
+                    <div class="hero-stat-label">Pitch Generator</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-value">Free</div>
+                    <div class="hero-stat-label">To Start</div>
+                </div>
             </div>
         </section>
+
+        <!-- ═══ FEATURES ═══ -->
+        <section class="features-section" id="features">
+            <div class="section-header">
+                <p class="overline">What you get</p>
+                <h2>Everything to Land Your Next Release</h2>
+                <p>From track analysis to label pitch — all in one workflow.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Track Analysis</h3>
+                    <p>Upload any audio file and get instant metrics: BPM, LUFS, headroom, intro length, and energy
+                        dynamics — all analyzed in your browser.</p>
+                    <span class="feature-tag tag-free">Free</span>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Smart Label Matching</h3>
+                    <p>Match your sound with 700+ labels using genre, mood, and energy scoring. Find labels that
+                        actually fit your music — not random suggestions.</p>
+                    <span class="feature-tag tag-free">Free</span>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Pitch Generator</h3>
+                    <p>Generate 3 pitch email variants (formal, direct, creative) tailored to the label's style. Copy or
+                        open directly in your mail app.</p>
+                    <span class="feature-tag tag-free">Free</span>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📋</div>
+                    <h3>Submission Dashboard</h3>
+                    <p>Track all your analyses, see your score history, and monitor your progress over time with a
+                        personal dashboard.</p>
+                    <span class="feature-tag tag-pro">Pro</span>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📇</div>
+                    <h3>Label CRM</h3>
+                    <p>Manage your demo submissions like a pro. Track sent/pending/rejected status, add notes, and never
+                        lose track of a pitch.</p>
+                    <span class="feature-tag tag-pro">Pro</span>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Cloud Sync</h3>
+                    <p>Your analyses and submissions are saved to the cloud. Access your data from any device, anytime.
+                        Never lose your work.</p>
+                    <span class="feature-tag tag-pro">Pro</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ HOW IT WORKS ═══ -->
+        <section class="how-section">
+            <div class="section-header">
+                <p class="overline">How it works</p>
+                <h2>From Upload to Pitch in 3 Steps</h2>
+            </div>
+
+            <div class="steps-list">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Upload & Analyze</h3>
+                        <p>Drag & drop your audio file. DIS analyzes BPM, loudness, headroom, intro length, and energy
+                            dynamics instantly — everything runs in your browser, no upload to servers.</p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Select Genre, Mood & Energy</h3>
+                        <p>Choose your track's genre, mood (dark, euphoric, groovy…), and energy level. DIS scores 700+
+                            labels against your selection using a weighted algorithm: Genre 40%, Mood 35%, Energy 25%.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Match & Pitch</h3>
+                        <p>Browse your top matching labels, view detailed info (bio, demo email, genres, mood). Click
+                            "Generate Pitch" to create AI-powered email variants, then copy or open directly in your
+                            mail app.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ PRICING ═══ -->
+        <section class="pricing-section" id="pricing">
+            <div class="section-header">
+                <p class="overline">Pricing</p>
+                <h2>Start Free, Go Pro When Ready</h2>
+                <p>No credit card required to start. Upgrade anytime.</p>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- FREE TIER -->
+                <div class="pricing-card">
+                    <div class="pricing-tier">Free</div>
+                    <div class="pricing-price">€0 <span>/ forever</span></div>
+                    <p class="pricing-desc">Perfect for trying DIS and analyzing your first tracks.</p>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Track analysis (BPM, LUFS, Energy)</li>
+                        <li><span class="check">✓</span> Label matching (700+ labels)</li>
+                        <li><span class="check">✓</span> AI pitch generation (3 variants)</li>
+                        <li><span class="check">✓</span> Copy & email export</li>
+                        <li class="disabled"><span class="check">—</span> Dashboard & history</li>
+                        <li class="disabled"><span class="check">—</span> Submission CRM</li>
+                        <li class="disabled"><span class="check">—</span> Cloud sync</li>
+                    </ul>
+                    <a href="analysis.html" class="btn-secondary" style="text-decoration: none;">Get Started</a>
+                </div>
+
+                <!-- PRO TIER -->
+                <div class="pricing-card featured">
+                    <div class="pricing-tier">Pro</div>
+                    <div class="pricing-price">Coming Soon</div>
+                    <p class="pricing-desc">For serious producers who want to track and manage their demo strategy.</p>
+                    <ul class="pricing-features">
+                        <li><span class="check">✓</span> Everything in Free</li>
+                        <li><span class="check">✓</span> Personal dashboard</li>
+                        <li><span class="check">✓</span> Analysis history & scores</li>
+                        <li><span class="check">✓</span> Submission CRM</li>
+                        <li><span class="check">✓</span> Cloud sync across devices</li>
+                        <li><span class="check">✓</span> Priority label data updates</li>
+                        <li><span class="check">✓</span> Advanced filtering & export</li>
+                    </ul>
+                    <a href="auth.html" class="btn-primary" style="text-decoration: none;">Create Account</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ CTA ═══ -->
+        <section class="cta-section">
+            <h2>Ready to Find Your Label?</h2>
+            <p>Upload your first track and see which labels match your sound — completely free.</p>
+            <a href="analysis.html" class="btn-primary" style="text-decoration: none;">Start Free Analysis →</a>
+        </section>
+
     </main>
+
+    <!-- ═══ FOOTER ═══ -->
+    <footer class="landing-footer">
+        <p>© 2025 DIS — Demo Intelligence System · Built for producers, by producers · <a href="auth.html">Login</a></p>
+    </footer>
 
     <script type="module" src="src/app.js"></script>
 </body>
