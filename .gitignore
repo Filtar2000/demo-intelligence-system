@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Environment Variables
+.env
+
+# Build outputs (if any)
+dist/
+build/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Large binaries/test files
+test_audio.wav
+*.mp3
+*.wav
+
+# Excel data (optional exclusion, keeping source data often good but large files bad for git)
+# keeping it for now as it's the core dataset unless too large (it's < 1MB so ok)

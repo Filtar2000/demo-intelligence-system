@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis - Demo Intelligence System</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Meyda.js (Audio Features) -->
+    <script src="https://unpkg.com/meyda/dist/web/meyda.min.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">DIS</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="analysis.html" class="active">Analysis</a></li>
+            <li><a href="#">Label</a></li>
+            <li><a href="#">CRM</a></li>
+        </ul>
+        <a href="#" class="btn-login" id="loginBtn">Login</a>
+    </nav>
+
+    <main class="analysis-container">
+        <section class="analysis-header">
+            <h1>Audio Analysis</h1>
+            <p>Upload your track to get detailed sonic metrics and demo scoring.</p>
+        </section>
+
+        <!-- Drag & Drop Zone -->
+        <div id="drop-zone" class="drop-zone">
+            <div class="drop-content">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round" class="icon-upload">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <p>Drag & Drop your audio file here</p>
+                <p class="sub-text">MP3 or WAV, max 50MB</p>
+                <input type="file" id="file-input" accept="audio/mpeg, audio/wav" hidden>
+                <button id="browse-btn" class="btn-secondary">Browse Files</button>
+            </div>
+            <div id="file-info" class="file-info hidden">
+                <p id="filename-display">track_name.mp3</p>
+                <button id="analyze-btn" class="btn-primary">Analyze Track</button>
+            </div>
+        </div>
+
+        <!-- Loader -->
+        <div id="loader" class="loader hidden"></div>
+
+        <!-- Results Section (Hidden initially) -->
+        <section id="results-section" class="results-section hidden">
+            <h2 class="section-title">Analysis Results</h2>
+
+            <div class="analysis-grid-container">
+                <!-- Left: Score Circle -->
+                <div class="score-container">
+                    <div class="score-circle">
+                        <svg class="progress-ring" width="200" height="200">
+                            <circle class="progress-ring__circle" stroke="white" stroke-width="10" fill="transparent"
+                                r="90" cx="100" cy="100" />
+                        </svg>
+                        <div class="score-text">
+                            <span id="score-val">0</span>
+                        </div>
+                    </div>
+                    <div id="score-status" class="score-status">--</div>
+                </div>
+
+                <!-- Right: Metrics Cards -->
+                <div class="metrics-container">
+                    <!-- BPM -->
+                    <div class="metric-card-row">
+                        <div class="metric-icon">🎵</div>
+                        <div class="metric-details">
+                            <span class="metric-label">BPM</span>
+                            <span class="metric-value-text" id="metric-bpm">--</span>
+                        </div>
+                        <div class="metric-bar-bg">
+                            <div class="metric-bar-fill" id="bar-bpm"></div>
+                        </div>
+                    </div>
+
+                    <!-- Loudness -->
+                    <div class="metric-card-row">
+                        <div class="metric-icon">🔊</div>
+                        <div class="metric-details">
+                            <span class="metric-label">Loudness (LUFS)</span>
+                            <span class="metric-value-text" id="metric-lufs">--</span>
+                        </div>
+                        <div class="metric-bar-bg">
+                            <div class="metric-bar-fill" id="bar-lufs"></div>
+                        </div>
+                    </div>
+
+                    <!-- Peak / Headroom -->
+                    <div class="metric-card-row">
+                        <div class="metric-icon">🛑</div>
+                        <div class="metric-details">
+                            <span class="metric-label">Headroom</span>
+                            <span class="metric-value-text" id="metric-headroom">--</span>
+                        </div>
+                        <div class="metric-bar-bg">
+                            <div class="metric-bar-fill" id="bar-headroom"></div>
+                        </div>
+                    </div>
+
+                    <!-- Intro -->
+                    <div class="metric-card-row">
+                        <div class="metric-icon">⏳</div>
+                        <div class="metric-details">
+                            <span class="metric-label">Intro Length</span>
+                            <span class="metric-value-text" id="metric-intro">--</span>
+                        </div>
+                        <div class="metric-bar-bg">
+                            <div class="metric-bar-fill" id="bar-intro"></div>
+                        </div>
+                    </div>
+
+                    <!-- Energy -->
+                    <div class="metric-card-row">
+                        <div class="metric-icon">⚡</div>
+                        <div class="metric-details">
+                            <span class="metric-label">Energy Dynamics</span>
+                            <span class="metric-value-text" id="metric-energy-var">--</span>
+                        </div>
+                        <div class="metric-bar-bg">
+                            <div class="metric-bar-fill" id="bar-energy"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="suggestions-container" class="suggestions-container hidden">
+                <h3>Suggestions</h3>
+                <ul id="suggestions-list">
+                    <!-- Suggestions will be injected here -->
+                </ul>
+            </div>
+
+            <div class="action-area">
+                <button id="find-labels-btn" class="btn-primary" disabled>Find Compatible Labels →</button>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="src/analysis.js"></script>
+</body>
+
+</html>

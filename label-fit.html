@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Matching - Demo Intelligence System</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">DIS</div>
+        <ul class="nav-links">
+            <li><a href="index.html">Dashboard</a></li>
+            <li><a href="analysis.html">Analysis</a></li>
+            <li><a href="#" class="active">Label Match</a></li>
+            <li><a href="#">CRM</a></li>
+        </ul>
+        <a href="#" class="btn-login" id="loginBtn">Login</a>
+    </nav>
+
+    <main class="analysis-container">
+        <section class="analysis-header">
+            <h1>Label Compatibility</h1>
+            <p>Based on your track's unique sonic fingerprint.</p>
+        </section>
+
+        <!-- Loader -->
+        <div id="loader" class="loader"></div>
+
+        <!-- Results Grid -->
+        <div id="labels-grid" class="labels-grid hidden">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <div id="no-results" class="hidden" style="text-align: center; margin-top: 50px; color: #888;">
+            <p>No matching labels found. Try analyzing a different track.</p>
+            <a href="analysis.html" class="btn-secondary" style="margin-top: 20px;">Analyze New Track</a>
+        </div>
+
+        <!-- Pitch Email Modal -->
+        <div id="pitch-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Generated Pitch Emails</h2>
+                    <button id="close-modal" class="close-modal">&times;</button>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="0">Formal</button>
+                    <button class="tab-btn" data-tab="1">Direct</button>
+                    <button class="tab-btn" data-tab="2">Creative</button>
+                </div>
+
+                <div id="email-content" class="email-display">
+                    <div id="email-subject" class="email-subject">Subject: ...</div>
+                    <div id="email-body">Generating...</div>
+                </div>
+
+                <div class="modal-actions">
+                    <button id="copy-btn" class="btn-primary">Copy Email</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="src/label-matcher.js"></script>
+</body>
+
+</html>

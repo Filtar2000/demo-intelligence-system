@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Intelligence System</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Supabase JS (via CDN for quick start, can be replaced with npm if needed) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">DIS</div>
+        <ul class="nav-links">
+            <li><a href="#" class="active" data-page="dashboard">Dashboard</a></li>
+            <li><a href="analysis.html">Analysis</a></li>
+            <li><a href="#" data-page="label">Label</a></li>
+            <li><a href="#" data-page="crm">CRM</a></li>
+        </ul>
+        <a href="#" class="btn-login" id="loginBtn">Login</a>
+    </nav>
+
+    <main id="app">
+        <section class="hero">
+            <h1>Demo Intelligence System</h1>
+            <p>Advanced analytics and management for electronic music producers.</p>
+        </section>
+    </main>
+
+    <!-- App Logic -->
+    <script type="module" src="src/app.js"></script>
+</body>
+
+</html>

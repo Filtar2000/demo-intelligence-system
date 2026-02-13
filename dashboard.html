@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Producer Dashboard - DIS</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <div class="logo">DIS</div>
+        <ul class="nav-links">
+            <li><a href="dashboard.html" class="active">Dashboard</a></li>
+            <li><a href="analysis.html">Analysis</a></li>
+            <li><a href="label-fit.html">Label Match</a></li>
+            <li><a href="#">CRM</a></li>
+        </ul>
+        <a href="#" class="btn-login" id="loginBtn">Logout</a>
+    </nav>
+
+    <main class="analysis-container">
+        <section class="analysis-header" style="text-align: left; margin-bottom: 30px;">
+            <h1 id="welcome-msg">Welcome, Producer</h1>
+            <p>Your demo activity hub.</p>
+        </section>
+
+        <!-- Stats Grid -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <span class="stat-value" id="stat-analyses">0</span>
+                <span class="stat-label">Analyses Performed</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="stat-submissions">0</span>
+                <span class="stat-label">Demos Sent</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="stat-replied">0</span>
+                <span class="stat-label">Replied</span>
+            </div>
+        </div>
+
+        <div class="dashboard-layout">
+            <!-- Left Column: Chart & Recent Analysis -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+
+                <!-- Chart -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Score History (Last 10)</span>
+                    </div>
+                    <canvas id="scoreChart"></canvas>
+                </div>
+
+                <!-- Recent Analyses -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Latest Analyses</span>
+                        <a href="analysis.html" class="btn-link">Analyze New Track</a>
+                    </div>
+                    <div class="activity-list" id="recent-analyses-list">
+                        <!-- Items injected via JS -->
+                        <div class="loading-text">Loading...</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Quick Actions & Sent Demos -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+
+                <!-- Quick Actions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Quick Actions</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="analysis.html" class="btn-primary"
+                            style="text-align: center; text-decoration: none;">Analyze New Track</a>
+                        <button id="btn-register-submission" class="btn-secondary">Register Submission</button>
+                    </div>
+                </div>
+
+                <!-- Recent Submissions -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <span class="panel-title">Recent Submissions</span>
+                    </div>
+                    <div class="activity-list" id="recent-submissions-list">
+                        <!-- Items injected via JS -->
+                        <div class="loading-text">Loading...</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Submission Modal -->
+        <div id="submission-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Register Submission</h2>
+                    <button id="close-submission-modal" class="close-modal">&times;</button>
+                </div>
+
+                <form id="submission-form" style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="form-group">
+                        <label for="sub-label">Label Name</label>
+                        <input type="text" id="sub-label" placeholder="e.g. Spinnin' Records" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sub-track">Track Name (Optional)</label>
+                        <input type="text" id="sub-track" placeholder="e.g. Summer Vibe">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sub-status">Status</label>
+                        <select id="sub-status"
+                            style="background: rgba(255,255,255,0.05); color:white; padding: 10px; border-radius:8px; border: 1px solid rgba(255,255,255,0.1);">
+                            <option value="sent">Sent</option>
+                            <option value="replied">Replied</option>
+                            <option value="signed">Signed</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary full-width">Save</button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script type="module" src="src/dashboard.js"></script>
+</body>
+
+</html>
