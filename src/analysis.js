@@ -5,37 +5,43 @@ import './app.js';
 // Sources: iZotope (2024), MasteringTheMix, Beatport genre data, ITU-R BS.1770.
 // LUFS ranges reflect actual club-ready masters (not streaming targets).
 // crestMin/crestMax = expected crest factor range (peak-to-RMS ratio in dB).
+// tonalRef = expected relative dB per frequency band [low, lowMid, highMid, high]
+//   These are relative energy offsets from the average. Positive = more energy expected.
+//   Based on analysis of professionally mastered reference tracks.
 const GENRE_PROFILES = {
-    'house': { bpmMin: 118, bpmMax: 128, lufsMin: -11, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 14, label: 'House' },
-    'deep house': { bpmMin: 118, bpmMax: 125, lufsMin: -13, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 8, crestMax: 16, label: 'Deep House' },
-    'tech house': { bpmMin: 124, bpmMax: 130, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 12, label: 'Tech House' },
-    'future house': { bpmMin: 124, bpmMax: 130, lufsMin: -10, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 5, crestMax: 12, label: 'Future House' },
-    'bass house': { bpmMin: 124, bpmMax: 132, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, label: 'Bass House' },
-    'afro house': { bpmMin: 118, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 7, crestMax: 14, label: 'Afro House' },
-    'organic house': { bpmMin: 110, bpmMax: 122, lufsMin: -13, lufsMax: -8, introMin: 16, introMax: 48, crestMin: 8, crestMax: 16, label: 'Organic House' },
-    'melodic house & techno': { bpmMin: 120, bpmMax: 128, lufsMin: -11, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 7, crestMax: 14, label: 'Melodic House & Techno' },
-    'peak-time techno': { bpmMin: 130, bpmMax: 140, lufsMin: -9, lufsMax: -5, introMin: 16, introMax: 32, crestMin: 4, crestMax: 10, label: 'Peak-Time Techno' },
-    'hard techno': { bpmMin: 140, bpmMax: 155, lufsMin: -8, lufsMax: -4, introMin: 16, introMax: 32, crestMin: 3, crestMax: 8, label: 'Hard Techno' },
-    'industrial techno': { bpmMin: 130, bpmMax: 150, lufsMin: -9, lufsMax: -5, introMin: 16, introMax: 32, crestMin: 4, crestMax: 10, label: 'Industrial Techno' },
-    'minimal': { bpmMin: 120, bpmMax: 128, lufsMin: -13, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 8, crestMax: 16, label: 'Minimal / Deep Tech' },
-    'trance': { bpmMin: 130, bpmMax: 142, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 12, label: 'Trance' },
-    'psy-trance': { bpmMin: 138, bpmMax: 148, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, label: 'Psy-Trance' },
-    'progressive house': { bpmMin: 122, bpmMax: 128, lufsMin: -11, lufsMax: -7, introMin: 32, introMax: 64, crestMin: 7, crestMax: 14, label: 'Progressive House' },
-    'indie dance': { bpmMin: 110, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 8, introMax: 16, crestMin: 8, crestMax: 16, label: 'Indie Dance' },
-    'nu disco': { bpmMin: 115, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 8, introMax: 16, crestMin: 8, crestMax: 16, label: 'Nu Disco' },
-    'dubstep': { bpmMin: 138, bpmMax: 142, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, label: 'Dubstep' },
-    'drum and bass': { bpmMin: 170, bpmMax: 180, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 5, crestMax: 12, label: 'Drum & Bass' },
-    'breaks': { bpmMin: 125, bpmMax: 140, lufsMin: -10, lufsMax: -6, introMin: 8, introMax: 16, crestMin: 6, crestMax: 12, label: 'Breaks' },
-    'electro house': { bpmMin: 126, bpmMax: 132, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, label: 'Electro House' },
-    'big room': { bpmMin: 126, bpmMax: 132, lufsMin: -8, lufsMax: -4, introMin: 8, introMax: 16, crestMin: 3, crestMax: 8, label: 'Big Room' },
-    'hard dance': { bpmMin: 150, bpmMax: 160, lufsMin: -8, lufsMax: -4, introMin: 8, introMax: 16, crestMin: 3, crestMax: 8, label: 'Hard Dance / Hardcore' },
-    'downtempo': { bpmMin: 90, bpmMax: 115, lufsMin: -16, lufsMax: -9, introMin: 8, introMax: 32, crestMin: 10, crestMax: 20, label: 'Electronica / Downtempo' },
-    'ambient': { bpmMin: 60, bpmMax: 110, lufsMin: -20, lufsMax: -12, introMin: 8, introMax: 64, crestMin: 12, crestMax: 24, label: 'Ambient / Experimental' },
-    'dance': { bpmMin: 118, bpmMax: 130, lufsMin: -10, lufsMax: -5, introMin: 4, introMax: 16, crestMin: 5, crestMax: 12, label: 'Dance / Pop-Dance' }
+    'house': { bpmMin: 118, bpmMax: 128, lufsMin: -11, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 14, tonalRef: [3, 0, -1, -4], label: 'House' },
+    'deep house': { bpmMin: 118, bpmMax: 125, lufsMin: -13, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 8, crestMax: 16, tonalRef: [4, 1, -2, -5], label: 'Deep House' },
+    'tech house': { bpmMin: 124, bpmMax: 130, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 12, tonalRef: [3, 1, 0, -3], label: 'Tech House' },
+    'future house': { bpmMin: 124, bpmMax: 130, lufsMin: -10, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 5, crestMax: 12, tonalRef: [2, 1, 1, -2], label: 'Future House' },
+    'bass house': { bpmMin: 124, bpmMax: 132, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, tonalRef: [5, 1, 0, -3], label: 'Bass House' },
+    'afro house': { bpmMin: 118, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 7, crestMax: 14, tonalRef: [3, 1, 0, -3], label: 'Afro House' },
+    'organic house': { bpmMin: 110, bpmMax: 122, lufsMin: -13, lufsMax: -8, introMin: 16, introMax: 48, crestMin: 8, crestMax: 16, tonalRef: [2, 1, 0, -2], label: 'Organic House' },
+    'melodic house & techno': { bpmMin: 120, bpmMax: 128, lufsMin: -11, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 7, crestMax: 14, tonalRef: [3, 1, -1, -3], label: 'Melodic House & Techno' },
+    'peak-time techno': { bpmMin: 130, bpmMax: 140, lufsMin: -9, lufsMax: -5, introMin: 16, introMax: 32, crestMin: 4, crestMax: 10, tonalRef: [4, 2, 1, -2], label: 'Peak-Time Techno' },
+    'hard techno': { bpmMin: 140, bpmMax: 155, lufsMin: -8, lufsMax: -4, introMin: 16, introMax: 32, crestMin: 3, crestMax: 8, tonalRef: [4, 2, 2, -1], label: 'Hard Techno' },
+    'industrial techno': { bpmMin: 130, bpmMax: 150, lufsMin: -9, lufsMax: -5, introMin: 16, introMax: 32, crestMin: 4, crestMax: 10, tonalRef: [4, 2, 1, -1], label: 'Industrial Techno' },
+    'minimal': { bpmMin: 120, bpmMax: 128, lufsMin: -13, lufsMax: -7, introMin: 16, introMax: 32, crestMin: 8, crestMax: 16, tonalRef: [2, 1, -1, -3], label: 'Minimal / Deep Tech' },
+    'trance': { bpmMin: 130, bpmMax: 142, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 12, tonalRef: [3, 1, 1, -1], label: 'Trance' },
+    'psy-trance': { bpmMin: 138, bpmMax: 148, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, tonalRef: [3, 2, 1, 0], label: 'Psy-Trance' },
+    'progressive house': { bpmMin: 122, bpmMax: 128, lufsMin: -11, lufsMax: -7, introMin: 32, introMax: 64, crestMin: 7, crestMax: 14, tonalRef: [3, 1, -1, -3], label: 'Progressive House' },
+    'indie dance': { bpmMin: 110, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 8, introMax: 16, crestMin: 8, crestMax: 16, tonalRef: [1, 1, 0, -1], label: 'Indie Dance' },
+    'nu disco': { bpmMin: 115, bpmMax: 125, lufsMin: -11, lufsMax: -7, introMin: 8, introMax: 16, crestMin: 8, crestMax: 16, tonalRef: [2, 1, 0, -1], label: 'Nu Disco' },
+    'dubstep': { bpmMin: 138, bpmMax: 142, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, tonalRef: [6, 1, 1, -2], label: 'Dubstep' },
+    'drum and bass': { bpmMin: 170, bpmMax: 180, lufsMin: -10, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 5, crestMax: 12, tonalRef: [4, 1, 1, -1], label: 'Drum & Bass' },
+    'breaks': { bpmMin: 125, bpmMax: 140, lufsMin: -10, lufsMax: -6, introMin: 8, introMax: 16, crestMin: 6, crestMax: 12, tonalRef: [3, 1, 0, -2], label: 'Breaks' },
+    'electro house': { bpmMin: 126, bpmMax: 132, lufsMin: -9, lufsMax: -5, introMin: 8, introMax: 16, crestMin: 4, crestMax: 10, tonalRef: [3, 1, 1, -1], label: 'Electro House' },
+    'big room': { bpmMin: 126, bpmMax: 132, lufsMin: -8, lufsMax: -4, introMin: 8, introMax: 16, crestMin: 3, crestMax: 8, tonalRef: [4, 1, 2, -1], label: 'Big Room' },
+    'hard dance': { bpmMin: 150, bpmMax: 160, lufsMin: -8, lufsMax: -4, introMin: 8, introMax: 16, crestMin: 3, crestMax: 8, tonalRef: [4, 2, 2, 0], label: 'Hard Dance / Hardcore' },
+    'downtempo': { bpmMin: 90, bpmMax: 115, lufsMin: -16, lufsMax: -9, introMin: 8, introMax: 32, crestMin: 10, crestMax: 20, tonalRef: [2, 1, 0, -2], label: 'Electronica / Downtempo' },
+    'ambient': { bpmMin: 60, bpmMax: 110, lufsMin: -20, lufsMax: -12, introMin: 8, introMax: 64, crestMin: 12, crestMax: 24, tonalRef: [1, 1, 0, -1], label: 'Ambient / Experimental' },
+    'dance': { bpmMin: 118, bpmMax: 130, lufsMin: -10, lufsMax: -5, introMin: 4, introMax: 16, crestMin: 5, crestMax: 12, tonalRef: [2, 1, 1, -1], label: 'Dance / Pop-Dance' }
 };
 
 // Fallback profile if genre not found
-const DEFAULT_PROFILE = { bpmMin: 120, bpmMax: 150, lufsMin: -11, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 14, label: 'Electronic' };
+const DEFAULT_PROFILE = { bpmMin: 120, bpmMax: 150, lufsMin: -11, lufsMax: -6, introMin: 16, introMax: 32, crestMin: 6, crestMax: 14, tonalRef: [3, 1, 0, -2], label: 'Electronic' };
+
+// Band names for UI display
+const BAND_NAMES = ['Low', 'Low-Mid', 'High-Mid', 'High'];
 
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('drop-zone');
@@ -73,6 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const metricCrest = document.getElementById('metric-crest');
     const barCrest = document.getElementById('bar-crest');
+
+    // Tonal balance elements
+    const tonalContainer = document.getElementById('tonal-balance-bars');
 
     // Drag & Drop Events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -264,6 +273,26 @@ document.addEventListener('DOMContentLoaded', () => {
             let spectralCentroids = [];
             let zcrValues = [];
 
+            // Tonal balance accumulators (4 bands)
+            // Band boundaries in Hz: Low (20-250), Low-Mid (250-2k), High-Mid (2k-6k), High (6k-20k)
+            const bandEdgesHz = [20, 250, 2000, 6000, 20000];
+            const hzPerBin = sampleRate / bufferSize;
+            const bandEdgeBins = bandEdgesHz.map(hz => Math.round(hz / hzPerBin));
+            let bandEnergySums = [0, 0, 0, 0];
+            let spectrumFrameCount = 0;
+
+            // Clipping detection
+            let clippedSamples = 0;
+            const clipThreshold = 0.9999;
+            for (let i = 0; i < channelData.length; i++) {
+                if (Math.abs(channelData[i]) >= clipThreshold) clippedSamples++;
+            }
+            if (hasSecondChannel) {
+                for (let i = 0; i < channelDataR.length; i++) {
+                    if (Math.abs(channelDataR[i]) >= clipThreshold) clippedSamples++;
+                }
+            }
+
             // Meyda setup
             Meyda.bufferSize = bufferSize;
 
@@ -275,13 +304,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     signal.set(chunk);
                 }
 
-                const features = Meyda.extract(['rms', 'spectralCentroid', 'zcr'], signal);
+                const features = Meyda.extract(['rms', 'spectralCentroid', 'zcr', 'powerSpectrum'], signal);
                 if (features) {
                     rmsValues.push(features.rms);
                     spectralCentroids.push(features.spectralCentroid);
                     zcrValues.push(features.zcr);
+
+                    // Accumulate energy per frequency band from powerSpectrum
+                    if (features.powerSpectrum) {
+                        for (let b = 0; b < 4; b++) {
+                            const lo = Math.max(0, bandEdgeBins[b]);
+                            const hi = Math.min(features.powerSpectrum.length - 1, bandEdgeBins[b + 1]);
+                            let bandSum = 0;
+                            for (let k = lo; k <= hi; k++) {
+                                bandSum += features.powerSpectrum[k];
+                            }
+                            bandEnergySums[b] += bandSum / Math.max(1, hi - lo + 1);
+                        }
+                        spectrumFrameCount++;
+                    }
                 }
             }
+
+            // Calculate average band energy in dB (relative)
+            const bandAvgDb = bandEnergySums.map(sum => {
+                const avg = sum / Math.max(1, spectrumFrameCount);
+                return avg > 0 ? 10 * Math.log10(avg) : -60;
+            });
+            // Normalize to make them relative (subtract the mean across bands)
+            const bandMean = bandAvgDb.reduce((a, b) => a + b, 0) / 4;
+            const tonalBalance = bandAvgDb.map(db => +(db - bandMean).toFixed(1));
 
             // --- CALCULATIONS ---
 
@@ -331,8 +383,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 5. Stereo Width (L/R correlation → 0 = mono, 1 = full stereo)
             let stereoWidth = 0;
+            let monoCompatibility = 1; // 1 = fully mono-compatible
             if (hasSecondChannel) {
                 let sumLR = 0, sumL2 = 0, sumR2 = 0;
+                let monoEnergy = 0, stereoEnergy = 0;
                 const step = 4; // sample every 4th value for performance
                 let count = 0;
                 for (let i = 0; i < channelData.length; i += step) {
@@ -341,17 +395,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     sumLR += l * r;
                     sumL2 += l * l;
                     sumR2 += r * r;
+                    // Mono compatibility: compare mono sum energy vs stereo energy
+                    const monoSample = (l + r) * 0.5;
+                    monoEnergy += monoSample * monoSample;
+                    stereoEnergy += (l * l + r * r) * 0.5;
                     count++;
                 }
                 const denom = Math.sqrt(sumL2 * sumR2);
-                const correlation = denom > 0 ? sumLR / denom : 1; // 1 = perfectly correlated (mono)
-                // Convert: correlation 1 = mono (width 0), correlation 0 = full stereo (width 1)
+                const correlation = denom > 0 ? sumLR / denom : 1;
                 stereoWidth = Math.max(0, Math.min(1, 1 - correlation));
+
+                // Mono compatibility = ratio of mono energy to stereo energy
+                // 1.0 = no loss in mono, < 0.7 = significant phase cancellation
+                monoCompatibility = stereoEnergy > 0 ? Math.min(1, monoEnergy / stereoEnergy) : 1;
             }
 
             // 6. Crest Factor (peak-to-RMS ratio in dB) — measures dynamic range / limiting aggression
             const crestFactor = peakDb - (20 * Math.log10(avgRms));
-            // crestFactor is always positive (peak > RMS). Low = heavily limited, high = dynamic.
 
             // --- SCORING ---
             const metrics = {
@@ -360,7 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 intro: introDuration,
                 bpm: bpm || 0,
                 stereoWidth: stereoWidth,
-                crestFactor: isFinite(crestFactor) ? Math.abs(crestFactor) : 10
+                monoCompatibility: monoCompatibility,
+                crestFactor: isFinite(crestFactor) ? Math.abs(crestFactor) : 10,
+                tonalBalance: tonalBalance,  // [low, lowMid, highMid, high] relative dB
+                clippedSamples: clippedSamples,
+                totalSamples: channelData.length * (hasSecondChannel ? 2 : 1)
             };
 
             const score = calculateScore(metrics);
@@ -385,6 +449,38 @@ document.addEventListener('DOMContentLoaded', () => {
             updateBar(barIntro, metrics.intro >= gp.introMin && metrics.intro <= gp.introMax, Math.min(100, (metrics.intro / Math.max(gp.introMax, 32)) * 100));
             updateBar(barStereo, stereoWidth > 0.05 && stereoWidth < 0.95, Math.max(5, stereoWidth * 100));
             updateBar(barCrest, metrics.crestFactor >= gp.crestMin && metrics.crestFactor <= gp.crestMax, Math.min(100, mapRange(metrics.crestFactor, 0, 24, 0, 100)));
+
+            // Tonal Balance — render 4 mini-bars
+            if (tonalContainer) {
+                tonalContainer.innerHTML = '';
+                const ref = gp.tonalRef || [3, 1, 0, -2];
+                for (let b = 0; b < 4; b++) {
+                    const diff = Math.abs(tonalBalance[b] - ref[b]);
+                    const isGood = diff <= 3; // within 3 dB of reference
+                    const row = document.createElement('div');
+                    row.className = 'tonal-band-row';
+                    row.innerHTML = `
+                        <span class="tonal-band-label">${BAND_NAMES[b]}</span>
+                        <div class="tonal-band-bar-bg">
+                            <div class="tonal-band-bar-fill" style="width:${Math.max(5, Math.min(100, mapRange(tonalBalance[b], -10, 10, 0, 100)))}%;background:${isGood ? 'var(--accent)' : 'rgba(255,255,255,0.3)'}"></div>
+                        </div>
+                        <span class="tonal-band-value">${tonalBalance[b] > 0 ? '+' : ''}${tonalBalance[b]} dB</span>
+                    `;
+                    tonalContainer.appendChild(row);
+                }
+            }
+
+            // Clipping indicator
+            const clipIndicator = document.getElementById('clip-indicator');
+            if (clipIndicator) {
+                if (clippedSamples > 0) {
+                    clipIndicator.textContent = `⚠ ${clippedSamples} clipped samples detected`;
+                    clipIndicator.style.color = '#ff6b6b';
+                } else {
+                    clipIndicator.textContent = '✓ No clipping detected';
+                    clipIndicator.style.color = 'var(--accent)';
+                }
+            }
 
             function updateBar(element, isGood, percent) {
                 if (!element) return;
@@ -592,61 +688,72 @@ document.addEventListener('DOMContentLoaded', () => {
         const profile = GENRE_PROFILES[selectedGenre] || DEFAULT_PROFILE;
         let score = 0;
 
-        // 1. LUFS — scored against genre-specific target range (35 pts)
-        //    Soft penalty: 2 pts per dB outside range (was 4 — too harsh)
+        // 1. LUFS — scored against genre-specific target range (30 pts)
         if (metrics.lufs >= profile.lufsMin && metrics.lufs <= profile.lufsMax) {
-            score += 35;
+            score += 30;
         } else {
             let diff = 0;
             if (metrics.lufs < profile.lufsMin) diff = Math.abs(metrics.lufs - profile.lufsMin);
             if (metrics.lufs > profile.lufsMax) diff = Math.abs(metrics.lufs - profile.lufsMax);
-            score += Math.max(0, Math.round(35 - (diff * 2)));
+            score += Math.max(0, Math.round(30 - (diff * 2)));
         }
 
-        // 2. BPM — genre range check (15 pts)
-        //    Only penalize significantly if >10 BPM outside range
-        if (metrics.bpm >= profile.bpmMin && metrics.bpm <= profile.bpmMax) {
+        // 2. Tonal Balance — 4 bands scored against genre reference (20 pts, 5 per band)
+        if (metrics.tonalBalance && profile.tonalRef) {
+            for (let b = 0; b < 4; b++) {
+                const diff = Math.abs(metrics.tonalBalance[b] - profile.tonalRef[b]);
+                if (diff <= 2) {
+                    score += 5;  // within 2 dB = excellent
+                } else if (diff <= 4) {
+                    score += 3;  // within 4 dB = acceptable
+                } else if (diff <= 6) {
+                    score += 1;  // within 6 dB = noticeable issue
+                }
+                // > 6 dB off = 0 pts for that band
+            }
+        } else {
+            score += 10; // fallback if no tonal data
+        }
+
+        // 3. Headroom / True Peak (15 pts)
+        if (metrics.headroom >= 0.8) {
             score += 15;
+        } else if (metrics.headroom >= 0.3) {
+            score += 13;
+        } else if (metrics.headroom >= 0.1) {
+            score += 8;
+        } else {
+            score += 3;
+        }
+        // Clipping penalty: deduct up to 5 pts
+        if (metrics.clippedSamples > 0) {
+            const clipRatio = metrics.clippedSamples / metrics.totalSamples;
+            score -= Math.min(5, Math.round(clipRatio * 5000));
+        }
+
+        // 4. Stereo Width + Mono Compatibility (10 pts)
+        if (metrics.stereoWidth > 0.05 && metrics.stereoWidth < 0.95) {
+            score += 7; // healthy stereo field
+        } else if (metrics.stereoWidth <= 0.05) {
+            score += 4; // mono
+        } else {
+            score += 3; // extreme stereo
+        }
+        // Mono compatibility bonus
+        if (metrics.monoCompatibility >= 0.85) {
+            score += 3; // good mono compatibility
+        } else if (metrics.monoCompatibility >= 0.7) {
+            score += 1;
+        }
+
+        // 5. BPM — genre range check (10 pts)
+        if (metrics.bpm >= profile.bpmMin && metrics.bpm <= profile.bpmMax) {
+            score += 10;
         } else {
             let dist = 0;
             if (metrics.bpm < profile.bpmMin) dist = profile.bpmMin - metrics.bpm;
             if (metrics.bpm > profile.bpmMax) dist = metrics.bpm - profile.bpmMax;
-            // Gentle: 1 pt per BPM off, but cap at full penalty after 15 BPM off
-            let penalty = Math.min(15, dist);
-            score += Math.round(Math.max(0, 15 - penalty));
-        }
-
-        // 3. Headroom / True Peak (20 pts)
-        //    ITU-R BS.1770 standard: ≤ −1.0 dBTP recommended
-        //    ≥ 0.3 dB = safe for lossy encoding
-        if (metrics.headroom >= 0.8) {
-            score += 20;  // ideal: ≥ 0.8 dB headroom
-        } else if (metrics.headroom >= 0.3) {
-            score += 17;  // good: standard limiter ceiling
-        } else if (metrics.headroom >= 0.1) {
-            score += 12;  // tight but functional
-        } else {
-            score += 4;   // true peak at 0 — inter-sample clipping risk
-        }
-
-        // 4. Intro length — scored against genre expectations (10 pts)
-        const introInSeconds = metrics.intro;
-        if (introInSeconds >= profile.introMin && introInSeconds <= profile.introMax) {
-            score += 10;
-        } else if (introInSeconds < profile.introMin * 0.3 || introInSeconds > profile.introMax * 2.5) {
-            score += 2; // way outside range, but still give minimal credit
-        } else {
-            score += 6; // partial credit
-        }
-
-        // 5. Stereo Width (10 pts)
-        //    Mono-compatible but not collapsed. Ideal: 10-80% width.
-        if (metrics.stereoWidth > 0.05 && metrics.stereoWidth < 0.95) {
-            score += 10; // healthy stereo field
-        } else if (metrics.stereoWidth <= 0.05) {
-            score += 5;  // fully mono — not wrong, but unusual for a finished master
-        } else {
-            score += 4;  // extreme stereo — phase issues likely
+            score += Math.round(Math.max(0, 10 - Math.min(10, dist)));
         }
 
         // 6. Crest Factor — dynamic range for genre (10 pts)
@@ -657,6 +764,16 @@ document.addEventListener('DOMContentLoaded', () => {
             if (metrics.crestFactor < profile.crestMin) diff = profile.crestMin - metrics.crestFactor;
             if (metrics.crestFactor > profile.crestMax) diff = metrics.crestFactor - profile.crestMax;
             score += Math.max(0, Math.round(10 - diff));
+        }
+
+        // 7. Intro length — genre expectations (5 pts)
+        const introInSeconds = metrics.intro;
+        if (introInSeconds >= profile.introMin && introInSeconds <= profile.introMax) {
+            score += 5;
+        } else if (introInSeconds < profile.introMin * 0.3 || introInSeconds > profile.introMax * 2.5) {
+            score += 1;
+        } else {
+            score += 3;
         }
 
         return Math.min(100, Math.max(0, Math.round(score)));
@@ -714,6 +831,29 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestions.push(`Crest factor is ${metrics.crestFactor.toFixed(1)} dB — the track may be over-compressed for ${genreName}. This means the limiter is working very hard, which can flatten transients and cause audible distortion. Try reducing the input gain to your limiter by 1-2 dB.`);
         } else if (metrics.crestFactor > profile.crestMax) {
             suggestions.push(`Crest factor is ${metrics.crestFactor.toFixed(1)} dB — dynamic range is wider than typical for ${genreName}. This could mean the track is under-limited for club playback. If this is a pre-master, that's expected.`);
+        }
+
+        // ── TONAL BALANCE ──
+        if (metrics.tonalBalance && profile.tonalRef) {
+            const bandLabels = ['Low end (20–250 Hz)', 'Low-mids (250 Hz–2 kHz)', 'High-mids (2–6 kHz)', 'High end (6–20 kHz)'];
+            for (let b = 0; b < 4; b++) {
+                const diff = metrics.tonalBalance[b] - profile.tonalRef[b];
+                if (Math.abs(diff) > 4) {
+                    const direction = diff > 0 ? 'above' : 'below';
+                    const action = diff > 0 ? 'Cut' : 'Boost';
+                    suggestions.push(`${bandLabels[b]} is ${Math.abs(diff).toFixed(1)} dB ${direction} the typical ${genreName} reference. ${action} this range by ~${Math.abs(diff).toFixed(0)} dB on your master bus EQ to better match genre expectations.`);
+                }
+            }
+        }
+
+        // ── CLIPPING ──
+        if (metrics.clippedSamples > 0) {
+            suggestions.push(`Detected ${metrics.clippedSamples} clipped samples. Digital clipping causes harsh distortion that becomes more audible on compressed streaming formats. Set your limiter's true peak ceiling to −1.0 dBTP and check your gain staging.`);
+        }
+
+        // ── MONO COMPATIBILITY ──
+        if (metrics.monoCompatibility < 0.7) {
+            suggestions.push(`Mono compatibility is low (${Math.round(metrics.monoCompatibility * 100)}%) — significant energy is lost when the track is summed to mono. This is a problem for club systems with mono subs and festival PAs. Check for phase issues in stereo widening, reverbs, or layered elements.`);
         }
 
         // ── ALL GOOD ──
