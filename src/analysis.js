@@ -426,7 +426,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Save metrics + selections to localStorage
-                localStorage.setItem('trackMetrics', JSON.stringify({ metrics, score, genre: selectedGenre, mood: selectedMood, energy: selectedEnergy }));
+                const currentFilename = window.currentAudioFile ? window.currentAudioFile.name : 'unknown';
+                localStorage.setItem('trackMetrics', JSON.stringify({ metrics, score, genre: selectedGenre, mood: selectedMood, energy: selectedEnergy, filename: currentFilename }));
 
                 // Show Label Section
                 const labelsSection = document.getElementById('labels-section');

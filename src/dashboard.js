@@ -3,6 +3,7 @@ import './app.js';
 document.addEventListener('DOMContentLoaded', async () => {
     const statAnalyses = document.getElementById('stat-analyses');
     const statSubmissions = document.getElementById('stat-submissions');
+    const statAwaiting = document.getElementById('stat-awaiting');
     const statReplied = document.getElementById('stat-replied');
 
     const recentAnalysesList = document.getElementById('recent-analyses-list');
@@ -87,14 +88,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 .from('submissions')
                 .select('*')
                 .eq('user_id', user.id)
-                .order('sent_at', { ascending: false });
+                .order('sent_date', { ascending: false });
 
             if (errS) throw errS;
 
             // Stats
             statAnalyses.textContent = analyses.length;
             statSubmissions.textContent = submissions.length;
-            statReplied.textContent = submissions.filter(s => s.status === 'replied').length;
+            statAwaiting.textContent = submissions.filter(s => s.status === 'sent').length;
+            statReplied.textContent = submissions.filter(s => s.status === 'replied' || s.status === 'signed').length;
 
             // Lists
             renderAnalysesList(analyses.slice(0, 5));
@@ -152,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         items.forEach(item => {
-            const date = new Date(item.sent_at).toLocaleDateString();
+            const date = item.sent_date ? new Date(item.sent_date).toLocaleDateString() : 'No date';
             let badgeClass = 'status-sent';
             let statusLabel = 'Sent';
 

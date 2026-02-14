@@ -378,6 +378,70 @@ function initPitchModal() {
             if (currentPitchLabel) showPitchModal(currentPitchLabel);
         });
     }
+
+    // ─ Mark as Sent — auto-create submission in CRM ─
+    const markSentBtn = document.getElementById('mark-sent-btn');
+    const markSentConfirm = document.getElementById('mark-sent-confirm');
+
+    if (markSentBtn) {
+        markSentBtn.addEventListener('click', async () => {
+            if (!currentPitchLabel) return;
+            if (!window.supabaseClient) {
+                markSentBtn.textContent = 'Login required to track';
+                markSentBtn.disabled = true;
+                return;
+            }
+
+            const { data: { user } } = await window.supabaseClient.auth.getUser();
+            if (!user) {
+                markSentBtn.textContent = 'Login required to track';
+                markSentBtn.disabled = true;
+                return;
+            }
+
+            markSentBtn.disabled = true;
+            markSentBtn.textContent = 'Saving...';
+
+            // Get track name from localStorage analysis data
+            const storedMetrics = localStorage.getItem('trackMetrics');
+            let trackName = '';
+            if (storedMetrics) {
+                try {
+                    const parsed = JSON.parse(storedMetrics);
+                    trackName = parsed.filename || '';
+                } catch (e) { /* ignore */ }
+            }
+            // Fallback: try the global currentAudioFile if on analysis page
+            if (!trackName && window.currentAudioFile) {
+                trackName = window.currentAudioFile.name;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                const { error } = await window.supabaseClient
+                    .from('submissions')
+                    .insert({
+                        user_id: user.id,
+                        label_name: currentPitchLabel.name,
+                        track_name: trackName || null,
+                        sent_date: today,
+                        status: 'sent',
+                        notes: `Pitched via DIS — ${currentPitchLabel.name}`
+                    });
+
+                if (error) throw error;
+
+                // Success
+                markSentBtn.classList.add('hidden');
+                if (markSentConfirm) markSentConfirm.classList.remove('hidden');
+            } catch (err) {
+                console.error('Error tracking submission:', err);
+                markSentBtn.textContent = '✗ Error — try again';
+                markSentBtn.disabled = false;
+            }
+        });
+    }
 }
 
 async function showPitchModal(label) {
@@ -392,6 +456,16 @@ async function showPitchModal(label) {
     if (pitchLoading) pitchLoading.classList.remove('hidden');
     if (pitchContent) pitchContent.classList.add('hidden');
     if (pitchError) pitchError.classList.add('hidden');
+
+    // Reset "Mark as Sent" state for this new pitch
+    const markSentBtn = document.getElementById('mark-sent-btn');
+    const markSentConfirm = document.getElementById('mark-sent-confirm');
+    if (markSentBtn) {
+        markSentBtn.classList.remove('hidden');
+        markSentBtn.disabled = false;
+        markSentBtn.textContent = '✓ Mark as Sent — Track in Submissions';
+    }
+    if (markSentConfirm) markSentConfirm.classList.add('hidden');
 
     // Get stored metrics
     const storedMetrics = localStorage.getItem('trackMetrics');

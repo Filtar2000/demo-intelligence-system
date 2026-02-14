@@ -81,8 +81,21 @@
                     <div id="email-body">Generating...</div>
                 </div>
 
-                <div class="modal-actions">
-                    <button id="copy-btn" class="btn-primary">Copy Email</button>
+                <div class="modal-actions" style="display: flex; gap: 10px;">
+                    <button id="copy-btn" class="btn-secondary" style="flex: 1;">📋 Copy Email</button>
+                    <button id="mailto-btn" class="btn-primary" style="flex: 1;">📧 Open in Mail App</button>
+                </div>
+
+                <div class="pitch-track-actions"
+                    style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center;">
+                    <button id="mark-sent-btn" class="btn-secondary"
+                        style="width: 100%; background: rgba(62,207,142,0.1); border-color: rgba(62,207,142,0.3); color: #3ecf8e;">
+                        ✓ Mark as Sent — Track in Submissions
+                    </button>
+                    <p id="mark-sent-confirm" class="hidden"
+                        style="color: #3ecf8e; margin-top: 10px; font-size: 0.9rem; font-weight: 500;">
+                        ✅ Tracked! You'll find it in your Submissions.
+                    </p>
                 </div>
             </div>
         </div>
