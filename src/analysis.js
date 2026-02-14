@@ -1,5 +1,40 @@
 import './app.js';
 
+// ─── GENRE-SPECIFIC MASTERING PROFILES ───
+// Based on Beatport categories, industry mastering standards, and DJ requirements.
+// Sources: iZotope, MasteringTheMix, Beatport genre data, DJ community standards.
+const GENRE_PROFILES = {
+    'house': { bpmMin: 118, bpmMax: 128, lufsMin: -10, lufsMax: -7, introMin: 16, introMax: 32, energyMin: 0.06, label: 'House' },
+    'deep house': { bpmMin: 118, bpmMax: 125, lufsMin: -12, lufsMax: -8, introMin: 16, introMax: 32, energyMin: 0.05, label: 'Deep House' },
+    'tech house': { bpmMin: 124, bpmMax: 130, lufsMin: -9, lufsMax: -7, introMin: 16, introMax: 32, energyMin: 0.07, label: 'Tech House' },
+    'future house': { bpmMin: 124, bpmMax: 130, lufsMin: -9, lufsMax: -6, introMin: 8, introMax: 16, energyMin: 0.08, label: 'Future House' },
+    'bass house': { bpmMin: 124, bpmMax: 132, lufsMin: -8, lufsMax: -6, introMin: 8, introMax: 16, energyMin: 0.09, label: 'Bass House' },
+    'afro house': { bpmMin: 118, bpmMax: 125, lufsMin: -10, lufsMax: -8, introMin: 16, introMax: 32, energyMin: 0.06, label: 'Afro House' },
+    'organic house': { bpmMin: 110, bpmMax: 122, lufsMin: -12, lufsMax: -9, introMin: 16, introMax: 48, energyMin: 0.04, label: 'Organic House' },
+    'melodic house & techno': { bpmMin: 120, bpmMax: 128, lufsMin: -10, lufsMax: -8, introMin: 16, introMax: 32, energyMin: 0.06, label: 'Melodic House & Techno' },
+    'peak-time techno': { bpmMin: 130, bpmMax: 140, lufsMin: -8, lufsMax: -6, introMin: 16, introMax: 32, energyMin: 0.08, label: 'Peak-Time Techno' },
+    'hard techno': { bpmMin: 140, bpmMax: 155, lufsMin: -7, lufsMax: -5, introMin: 16, introMax: 32, energyMin: 0.10, label: 'Hard Techno' },
+    'industrial techno': { bpmMin: 130, bpmMax: 150, lufsMin: -8, lufsMax: -6, introMin: 16, introMax: 32, energyMin: 0.09, label: 'Industrial Techno' },
+    'minimal': { bpmMin: 120, bpmMax: 128, lufsMin: -12, lufsMax: -8, introMin: 16, introMax: 32, energyMin: 0.04, label: 'Minimal / Deep Tech' },
+    'trance': { bpmMin: 130, bpmMax: 142, lufsMin: -9, lufsMax: -7, introMin: 16, introMax: 32, energyMin: 0.08, label: 'Trance' },
+    'psy-trance': { bpmMin: 138, bpmMax: 148, lufsMin: -8, lufsMax: -6, introMin: 8, introMax: 16, energyMin: 0.09, label: 'Psy-Trance' },
+    'progressive house': { bpmMin: 122, bpmMax: 128, lufsMin: -10, lufsMax: -8, introMin: 32, introMax: 64, energyMin: 0.05, label: 'Progressive House' },
+    'indie dance': { bpmMin: 110, bpmMax: 125, lufsMin: -10, lufsMax: -8, introMin: 8, introMax: 16, energyMin: 0.06, label: 'Indie Dance' },
+    'nu disco': { bpmMin: 115, bpmMax: 125, lufsMin: -10, lufsMax: -8, introMin: 8, introMax: 16, energyMin: 0.06, label: 'Nu Disco' },
+    'dubstep': { bpmMin: 138, bpmMax: 142, lufsMin: -8, lufsMax: -6, introMin: 8, introMax: 16, energyMin: 0.10, label: 'Dubstep' },
+    'drum and bass': { bpmMin: 170, bpmMax: 180, lufsMin: -9, lufsMax: -7, introMin: 16, introMax: 32, energyMin: 0.08, label: 'Drum & Bass' },
+    'breaks': { bpmMin: 125, bpmMax: 140, lufsMin: -9, lufsMax: -7, introMin: 8, introMax: 16, energyMin: 0.07, label: 'Breaks' },
+    'electro house': { bpmMin: 126, bpmMax: 132, lufsMin: -8, lufsMax: -6, introMin: 8, introMax: 16, energyMin: 0.09, label: 'Electro House' },
+    'big room': { bpmMin: 126, bpmMax: 132, lufsMin: -7, lufsMax: -5, introMin: 8, introMax: 16, energyMin: 0.10, label: 'Big Room' },
+    'hard dance': { bpmMin: 150, bpmMax: 160, lufsMin: -7, lufsMax: -5, introMin: 8, introMax: 16, energyMin: 0.10, label: 'Hard Dance / Hardcore' },
+    'downtempo': { bpmMin: 90, bpmMax: 115, lufsMin: -14, lufsMax: -10, introMin: 8, introMax: 32, energyMin: 0.03, label: 'Electronica / Downtempo' },
+    'ambient': { bpmMin: 60, bpmMax: 110, lufsMin: -18, lufsMax: -12, introMin: 8, introMax: 64, energyMin: 0.02, label: 'Ambient / Experimental' },
+    'dance': { bpmMin: 118, bpmMax: 130, lufsMin: -9, lufsMax: -6, introMin: 4, introMax: 16, energyMin: 0.07, label: 'Dance / Pop-Dance' }
+};
+
+// Fallback profile if genre not found
+const DEFAULT_PROFILE = { bpmMin: 120, bpmMax: 150, lufsMin: -10, lufsMax: -7, introMin: 16, introMax: 32, energyMin: 0.06, label: 'Electronic' };
+
 document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -313,12 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
             metricIntro.textContent = `${introDuration.toFixed(1)}s`;
             metricEnergy.textContent = energyStdDev.toFixed(3);
 
-            // Update Progress Bars (Visual Feedback based on quality)
-            updateBar(barBpm, metrics.bpm >= 120 && metrics.bpm <= 150, 100);
-            updateBar(barLufs, metrics.lufs >= -14 && metrics.lufs <= -6, mapRange(metrics.lufs, -30, 0, 0, 100));
+            // Update Progress Bars (Visual Feedback based on genre profile)
+            const selectedGenre = document.getElementById('genre-select').value || '';
+            const gp = GENRE_PROFILES[selectedGenre] || DEFAULT_PROFILE;
+            updateBar(barBpm, metrics.bpm >= gp.bpmMin && metrics.bpm <= gp.bpmMax, 100);
+            updateBar(barLufs, metrics.lufs >= gp.lufsMin && metrics.lufs <= gp.lufsMax, mapRange(metrics.lufs, -30, 0, 0, 100));
             updateBar(barHeadroom, metrics.headroom >= 3, Math.min(100, metrics.headroom * 10));
-            updateBar(barIntro, metrics.intro >= 16 && metrics.intro <= 32, Math.min(100, (metrics.intro / 60) * 100)); // normalized to 60s
-            updateBar(barEnergy, metrics.energyStdDev > 0.05, Math.min(100, metrics.energyStdDev * 500));
+            updateBar(barIntro, metrics.intro >= gp.introMin && metrics.intro <= gp.introMax, Math.min(100, (metrics.intro / Math.max(gp.introMax, 32)) * 100));
+            updateBar(barEnergy, metrics.energyStdDev >= gp.energyMin, Math.min(100, metrics.energyStdDev * 500));
 
             function updateBar(element, isGood, percent) {
                 if (!element) return;
@@ -521,106 +558,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateScore(metrics) {
+        const selectedGenre = document.getElementById('genre-select').value || '';
+        const profile = GENRE_PROFILES[selectedGenre] || DEFAULT_PROFILE;
         let score = 0;
 
-        // 1. LUFS (-14 to -6)
-        if (metrics.lufs >= -14 && metrics.lufs <= -6) {
-            score += 25;
+        // 1. LUFS — scored against genre-specific target range (30 pts)
+        if (metrics.lufs >= profile.lufsMin && metrics.lufs <= profile.lufsMax) {
+            score += 30;
         } else {
             let diff = 0;
-            if (metrics.lufs < -14) diff = Math.abs(metrics.lufs - (-14));
-            if (metrics.lufs > -6) diff = Math.abs(metrics.lufs - (-6));
-            let points = 25 - (diff * 3);
-            score += Math.max(0, points);
+            if (metrics.lufs < profile.lufsMin) diff = Math.abs(metrics.lufs - profile.lufsMin);
+            if (metrics.lufs > profile.lufsMax) diff = Math.abs(metrics.lufs - profile.lufsMax);
+            score += Math.max(0, Math.round(30 - (diff * 4)));
         }
 
-        // 2. Headroom (>3dB = 20, <1dB = 0)
-        if (metrics.headroom >= 3) {
-            score += 20;
-        } else if (metrics.headroom <= 1) {
-            score += 0;
-        } else {
-            let ratio = (metrics.headroom - 1) / 2;
-            score += Math.round(ratio * 20);
-        }
-
-        // 3. Intro (16-32s)
-        if (metrics.intro >= 16 && metrics.intro <= 32) {
-            score += 20;
-        } else if (metrics.intro < 8 || metrics.intro > 60) {
-            score += 0;
-        } else {
-            score += 10; // Partial credit
-        }
-
-        // 4. Energy (>0.15 = 20, <0.05 = 5)
-        if (metrics.energyStdDev > 0.15) {
-            score += 20;
-        } else if (metrics.energyStdDev < 0.05) {
-            score += 5;
-        } else {
-            let range = 0.10;
-            let val = metrics.energyStdDev - 0.05;
-            let ratio = val / range;
-            score += 5 + Math.round(ratio * 15);
-        }
-
-        // 5. BPM (120-150)
-        if (metrics.bpm >= 120 && metrics.bpm <= 150) {
-            score += 15;
+        // 2. BPM — scored against genre-specific range (25 pts)
+        if (metrics.bpm >= profile.bpmMin && metrics.bpm <= profile.bpmMax) {
+            score += 25;
         } else {
             let dist = 0;
-            if (metrics.bpm < 120) dist = 120 - metrics.bpm;
-            if (metrics.bpm > 150) dist = metrics.bpm - 150;
-            let penalty = (dist / 30) * 15;
-            score += Math.round(Math.max(0, 15 - penalty));
+            if (metrics.bpm < profile.bpmMin) dist = profile.bpmMin - metrics.bpm;
+            if (metrics.bpm > profile.bpmMax) dist = metrics.bpm - profile.bpmMax;
+            let penalty = (dist / 20) * 25;
+            score += Math.round(Math.max(0, 25 - penalty));
         }
 
-        // 6. Vocal Bonus (Small bonus for detection)
-        if (metrics.vocalPresence > 50) {
-            score += 5; // Bonus checks
+        // 3. Headroom — 1dB minimum required, 3dB+ ideal (15 pts)
+        if (metrics.headroom >= 3) {
+            score += 15;
+        } else if (metrics.headroom >= 1) {
+            score += Math.round(((metrics.headroom - 1) / 2) * 15);
+        }
+
+        // 4. Intro length — scored against genre expectations (15 pts)
+        const introInSeconds = metrics.intro;
+        if (introInSeconds >= profile.introMin && introInSeconds <= profile.introMax) {
+            score += 15;
+        } else if (introInSeconds < profile.introMin * 0.5 || introInSeconds > profile.introMax * 2) {
+            score += 0;
+        } else {
+            score += 8; // partial credit
+        }
+
+        // 5. Energy dynamics — minimum variation for genre (15 pts)
+        if (metrics.energyStdDev >= profile.energyMin) {
+            score += 15;
+        } else {
+            let ratio = metrics.energyStdDev / profile.energyMin;
+            score += Math.round(ratio * 15);
         }
 
         return Math.min(100, Math.max(0, Math.round(score)));
     }
 
     function generateSuggestions(metrics, score) {
+        const selectedGenre = document.getElementById('genre-select').value || '';
+        const profile = GENRE_PROFILES[selectedGenre] || DEFAULT_PROFILE;
+        const genreName = profile.label;
         let suggestions = [];
 
-        // Note: Suggestions requested in Italian per previous prompt, but UI text in English.
-        // The user prompt said: "(tutto questo che ti ho detto però sul sito lo devi tradurre in inglese)"
-        // referring to the UI layout. However, the previous prompt specifically asked for Italian suggestions.
-        // I will keep suggestions in Italian to match the specific logic request, but ensure all UI labels are English.
-        // Wait, "tutto questo che ti ho detto però sul sito lo devi tradurre in inglese" implies the whole site text including new UI.
-        // I will translate these suggestions to English to be consistent with the "whole site in English" request in this turn.
+        // LUFS — genre-specific feedback
+        if (metrics.lufs < profile.lufsMin) {
+            const gap = Math.abs(metrics.lufs - profile.lufsMin).toFixed(1);
+            suggestions.push(`Loudness is ${gap} dB below the typical range for ${genreName}. Most ${genreName} releases sit between ${profile.lufsMin} and ${profile.lufsMax} LUFS. Try pushing your limiter a bit harder, or check if your mix has too much low-end eating up headroom.`);
+        } else if (metrics.lufs > profile.lufsMax) {
+            const gap = Math.abs(metrics.lufs - profile.lufsMax).toFixed(1);
+            suggestions.push(`Loudness is ${gap} dB above typical ${genreName} levels (${profile.lufsMin} to ${profile.lufsMax} LUFS). This can cause audible distortion and pumping. Back off the limiter and check your gain staging.`);
+        }
 
-        // LUFS
-        if (metrics.lufs < -14) {
-            suggestions.push("Volume too low: The track sounds soft compared to club standards. Aim for -10 to -8 LUFS in mastering.");
-        } else if (metrics.lufs > -6) {
-            suggestions.push("Volume too high: The track is over-compressed. reduce limiting to recover dynamics (target -9 LUFS).");
+        // BPM — genre-specific feedback
+        if (metrics.bpm > 0) {
+            const bpmRound = Math.round(metrics.bpm);
+            if (metrics.bpm < profile.bpmMin || metrics.bpm > profile.bpmMax) {
+                suggestions.push(`Detected BPM: ${bpmRound}. ${genreName} tracks typically sit between ${profile.bpmMin}–${profile.bpmMax} BPM. If this is intentional, no worries — but some labels may expect tracks within the standard range for the genre.`);
+            }
         }
 
         // Headroom
-        if (metrics.headroom < 3) {
-            suggestions.push(`Insufficient Headroom (${metrics.headroom.toFixed(1)}dB): Labels often require -3dB or -6dB headroom for mastering. Lower the master fader.`);
+        if (metrics.headroom < 1) {
+            suggestions.push(`Almost no headroom (${metrics.headroom.toFixed(1)} dB). Your peaks are hitting 0 dBFS, which can cause clipping on some systems. Most labels ask for at least 1–3 dB of headroom on demos so their mastering engineer has room to work.`);
+        } else if (metrics.headroom < 3) {
+            suggestions.push(`Headroom is tight at ${metrics.headroom.toFixed(1)} dB. Many labels prefer demos with 3–6 dB of headroom. Consider pulling back your master fader or reducing limiter output.`);
         }
 
-        // Intro
-        if (metrics.intro < 16) {
-            suggestions.push("Intro too short: DJs need time to mix. Extend the intro to at least 16-32 seconds (8-16 bars).");
-        } else if (metrics.intro > 60) {
-            suggestions.push("Intro too long: Risk of losing attention. Try to condense the intro to under 60 seconds.");
+        // Intro length — genre-specific
+        if (metrics.intro < profile.introMin) {
+            const barsEstimate = Math.round(profile.introMin / 2); // rough: 1 bar ≈ 2s at ~120bpm
+            suggestions.push(`Intro is ${metrics.intro.toFixed(1)}s — shorter than what DJs usually need for ${genreName}. Aim for at least ${profile.introMin}–${profile.introMax} seconds (~${barsEstimate}+ bars) so DJs can mix in smoothly.`);
+        } else if (metrics.intro > profile.introMax * 2) {
+            suggestions.push(`Intro runs ${metrics.intro.toFixed(1)}s, which is unusually long even for ${genreName}. Consider trimming it — you can always provide an extended mix separately.`);
         }
 
-        // Energy
-        if (metrics.energyStdDev < 0.05) {
-            suggestions.push("Flat dynamics: The track has little energy variation. Ensure drops have impact relative to breaks.");
+        // Energy dynamics
+        if (metrics.energyStdDev < profile.energyMin) {
+            suggestions.push(`The track's energy feels fairly flat (variation: ${metrics.energyStdDev.toFixed(3)}). ${genreName} tracks usually benefit from contrast between breakdowns and drops. Try automating filters, adding risers, or creating more pronounced build-ups.`);
         }
 
-        // BPM
-        if (metrics.bpm < 115 || metrics.bpm > 155) {
-            suggestions.push(`Unusual BPM (${Math.round(metrics.bpm)}): For standard club music, aim for the 120-150 BPM range.`);
+        // Positive feedback when everything is good
+        if (suggestions.length === 0) {
+            suggestions.push(`Looking solid for ${genreName}. BPM, loudness, intro, and dynamics are all within the expected range. Focus on the mix quality and arrangement — the technical side checks out.`);
         }
 
         return suggestions.slice(0, 5);

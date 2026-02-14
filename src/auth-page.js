@@ -102,11 +102,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Google Login
     document.getElementById('google-login-btn').addEventListener('click', async () => {
-        const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + '/dashboard.html'
+        try {
+            const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard.html'
+                }
+            });
+            if (error) {
+                if (error.message && error.message.toLowerCase().includes('provider')) {
+                    showMessage("Google login isn't available yet. Use email & password for now.", "error");
+                } else {
+                    showMessage(error.message, "error");
+                }
             }
-        });
+        } catch (err) {
+            showMessage("Something went wrong with Google login. Try email & password instead.", "error");
+        }
     });
 });

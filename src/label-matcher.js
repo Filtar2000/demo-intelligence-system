@@ -25,9 +25,9 @@ export function calculateMatchScore(label, userGenre, userMood, userEnergy) {
 
     // Comprehensive genre alias mapping based on Beatport categories
     const genreAliases = {
-        'melodic techno': ['melodic techno', 'melodic house & techno', 'melodic house', 'progressive house'],
+        'melodic house & techno': ['melodic house & techno', 'melodic house', 'melodic techno', 'progressive house'],
         'melodic house': ['melodic house & techno', 'melodic house', 'melodic techno', 'progressive house'],
-        'melodic house & techno': ['melodic techno', 'melodic house', 'progressive house'],
+        'melodic techno': ['melodic house & techno', 'melodic techno', 'melodic house', 'progressive house'],
         'house': ['house', 'deep house', 'tech house', 'funky house', 'jackin house', 'soulful house'],
         'deep house': ['deep house', 'house', 'organic house', 'soulful house'],
         'tech house': ['tech house', 'house', 'minimal|deep tech', 'deep tech'],
@@ -273,6 +273,9 @@ function openLabelDetail(label) {
     }
 
     modal.classList.remove('hidden');
+
+    // Ensure pitch modal bindings are always initialized
+    initPitchModal();
 }
 
 // ─── PITCH MODAL LOGIC ───

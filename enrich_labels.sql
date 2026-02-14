@@ -37,7 +37,7 @@ UPDATE labels SET
     style = ARRAY['cinematic builds', 'massive drops', 'atmospheric pads'],
     energy = 'high',
     bio = 'Founded by Tale Of Us (Anyma & MRAK). Genre-defining melodic techno with cinematic sound design, profound melodies, and immersive events. Home to Afterlife''s signature epic, emotionally-charged sound.',
-    website = 'https://afterlifeofc.com',
+    website = 'https://after.life',
     demo_email = 'demo@afterlifeofc.com'
 WHERE LOWER(name) = 'afterlife';
 
@@ -46,7 +46,7 @@ UPDATE labels SET
     style = ARRAY['analog textures', 'deep grooves', 'dark melodics'],
     energy = 'medium',
     bio = 'Founded by Mind Against. Deep, analog-driven melodic techno with darker textures and immersive, hypnotic soundscapes rooted in the Berlin underground.',
-    website = 'https://habitatmusic.net'
+    website = 'https://www.habitat.art'
 WHERE LOWER(name) = 'habitat';
 
 UPDATE labels SET
@@ -54,7 +54,7 @@ UPDATE labels SET
     style = ARRAY['powerful drops', 'high-energy melodic', 'anthemic builds'],
     energy = 'high',
     bio = 'Founded by ARTBAT. Melodic and progressive high-energy techno featuring powerful sound design and impactful drops. One of the fastest rising melodic labels.',
-    website = 'https://upperground.co'
+    website = ''
 WHERE LOWER(name) = 'upperground';
 
 UPDATE labels SET
@@ -105,7 +105,7 @@ UPDATE labels SET
     style = ARRAY['gritty textures', 'futuristic sound design', 'dark tension'],
     energy = 'high',
     bio = 'Founded by Massano. Gritty, futuristic melodic techno with dark tension and powerful impact. One of the newest labels pushing the boundaries of the genre.',
-    website = 'https://simulatemusic.com'
+    website = 'https://simulateofficial.com'
 WHERE LOWER(name) = 'simulate';
 
 UPDATE labels SET
@@ -121,7 +121,7 @@ UPDATE labels SET
     style = ARRAY['deep melodics', 'emotive sound design', 'rhythmic complexity'],
     energy = 'medium',
     bio = 'Established in 2016, focuses on melodic techno and electronic music. Known for deep, emotive soundscapes combined with rhythmic complexity.',
-    website = 'https://siameserecordings.com'
+    website = 'https://www.adriatique.ch/siamese-rec'
 WHERE LOWER(name) = 'siamese';
 
 UPDATE labels SET
@@ -129,7 +129,7 @@ UPDATE labels SET
     style = ARRAY['vibrant melodies', 'progressive elements', 'ambient influences'],
     energy = 'medium',
     bio = 'Founded in 2023. Specializes in vibrant and immersive sounds, combining melodic techno with hints of progressive and ambient influences.',
-    website = 'https://zamnarecords.com'
+    website = 'https://zmaagency.com/talents/zamna-records/'
 WHERE LOWER(name) = 'zamna records';
 
 
@@ -193,7 +193,7 @@ UPDATE labels SET
     style = ARRAY['stripped-back', 'functional', 'minimal techno'],
     energy = 'high',
     bio = 'Iconic Berlin-based label for raw, stripped-back techno. Known for ultra-minimal, pounding grooves designed purely for peak-time club environments.',
-    website = 'https://soma-records.com'
+    website = 'https://somarecords.com'
 WHERE LOWER(name) = 'soma';
 
 UPDATE labels SET

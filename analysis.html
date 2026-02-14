@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis - Demo Intelligence System</title>
+    <title>Track Check — DIS</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,8 +38,9 @@
 
     <main class="analysis-container">
         <section class="analysis-header">
-            <h1>Audio Analysis</h1>
-            <p>Upload your track to get detailed sonic metrics and demo scoring.</p>
+            <h1>Track Check</h1>
+            <p>Drop your track here. We'll break down loudness, tempo, dynamics, and intro — so you know where it stands
+                before you send it out.</p>
         </section>
 
         <!-- Drag & Drop Zone -->
@@ -74,8 +75,7 @@
                             <option value="organic house">Organic House</option>
                         </optgroup>
                         <optgroup label="Techno">
-                            <option value="melodic techno">Melodic Techno</option>
-                            <option value="melodic house">Melodic House & Techno</option>
+                            <option value="melodic house & techno">Melodic House & Techno</option>
                             <option value="peak-time techno">Peak-time Techno</option>
                             <option value="hard techno">Hard Techno</option>
                             <option value="industrial techno">Industrial Techno</option>
@@ -262,8 +262,7 @@
                     </div>
                 </div>
                 <div class="ld-actions">
-                    <button id="ld-generate-pitch" class="btn-primary" style="display:none;">✉ Generate Pitch
-                        Email</button>
+                    <button id="ld-generate-pitch" class="btn-primary">✉ Draft Pitch Email</button>
                 </div>
             </div>
         </div>
@@ -273,13 +272,13 @@
     <div id="pitch-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">✉ AI Pitch Generator</h2>
+                <h2 class="modal-title">✉ Pitch Draft</h2>
                 <button id="close-modal" class="close-modal">&times;</button>
             </div>
 
             <div id="pitch-loading" class="pitch-loading">
                 <div class="loader"></div>
-                <p>Generating pitch with AI...</p>
+                <p>Writing your pitch...</p>
             </div>
 
             <div id="pitch-content" class="hidden">
