@@ -62,6 +62,33 @@
             <a href="analysis.html" class="btn-secondary" style="margin-top: 20px;">Analyze New Track</a>
         </div>
 
+        <!-- Label Detail Modal -->
+        <div id="label-detail-modal" class="modal-overlay hidden">
+            <div class="modal-content label-detail-content">
+                <button class="close-modal" id="close-label-detail">&times;</button>
+                <div class="label-detail-header">
+                    <h2 id="ld-name"></h2>
+                    <span id="ld-score" class="ld-score-badge"></span>
+                </div>
+                <p id="ld-bio" class="ld-bio"></p>
+                <div id="ld-tags" class="ld-tags"></div>
+                <div class="ld-info-grid">
+                    <div class="ld-info-item" id="ld-energy-wrap"><span class="ld-info-label">Energy</span><span
+                            id="ld-energy" class="ld-info-value"></span></div>
+                    <div class="ld-info-item" id="ld-email-wrap"><span class="ld-info-label">Demo Email</span><a
+                            id="ld-email" class="ld-info-value ld-email-link" href="#"></a></div>
+                    <div class="ld-info-item" id="ld-website-wrap"><span class="ld-info-label">Website</span><a
+                            id="ld-website" class="ld-info-value ld-email-link" href="#" target="_blank"></a></div>
+                    <div class="ld-info-item" id="ld-sc-wrap"><span class="ld-info-label">SoundCloud</span><a
+                            id="ld-soundcloud" class="ld-info-value ld-email-link" href="#" target="_blank">Listen →</a>
+                    </div>
+                </div>
+                <div class="ld-actions">
+                    <button id="ld-generate-pitch" class="btn-primary">✉ Draft Pitch Email</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Pitch Email Modal -->
         <div id="pitch-modal" class="modal-overlay hidden">
             <div class="modal-content">
