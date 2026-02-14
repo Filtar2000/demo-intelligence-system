@@ -70,32 +70,44 @@
                     <button id="close-modal" class="close-modal">&times;</button>
                 </div>
 
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="0">Formal</button>
-                    <button class="tab-btn" data-tab="1">Direct</button>
-                    <button class="tab-btn" data-tab="2">Creative</button>
+                <div id="pitch-loading" class="pitch-loading">
+                    <div class="loader"></div>
+                    <p>Writing your pitch...</p>
                 </div>
 
-                <div id="email-content" class="email-display">
-                    <div id="email-subject" class="email-subject">Subject: ...</div>
-                    <div id="email-body">Generating...</div>
+                <div id="pitch-content" class="hidden">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="0">Formal</button>
+                        <button class="tab-btn" data-tab="1">Direct</button>
+                        <button class="tab-btn" data-tab="2">Creative</button>
+                    </div>
+
+                    <div class="email-preview">
+                        <div id="email-subject" class="email-subject">Subject: ...</div>
+                        <div id="email-body" class="email-body"></div>
+                    </div>
+
+                    <div class="pitch-actions" style="display: flex; gap: 10px;">
+                        <button id="copy-btn" class="btn-secondary" style="flex: 1;">📋 Copy Email</button>
+                        <button id="mailto-btn" class="btn-primary" style="flex: 1;">📧 Open in Mail App</button>
+                    </div>
+
+                    <div class="pitch-track-actions"
+                        style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center;">
+                        <button id="mark-sent-btn" class="btn-secondary"
+                            style="width: 100%; background: rgba(62,207,142,0.1); border-color: rgba(62,207,142,0.3); color: #3ecf8e;">
+                            ✓ Mark as Sent — Track in Submissions
+                        </button>
+                        <p id="mark-sent-confirm" class="hidden"
+                            style="color: #3ecf8e; margin-top: 10px; font-size: 0.9rem; font-weight: 500;">
+                            ✅ Tracked! You'll find it in your Submissions.
+                        </p>
+                    </div>
                 </div>
 
-                <div class="modal-actions" style="display: flex; gap: 10px;">
-                    <button id="copy-btn" class="btn-secondary" style="flex: 1;">📋 Copy Email</button>
-                    <button id="mailto-btn" class="btn-primary" style="flex: 1;">📧 Open in Mail App</button>
-                </div>
-
-                <div class="pitch-track-actions"
-                    style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center;">
-                    <button id="mark-sent-btn" class="btn-secondary"
-                        style="width: 100%; background: rgba(62,207,142,0.1); border-color: rgba(62,207,142,0.3); color: #3ecf8e;">
-                        ✓ Mark as Sent — Track in Submissions
-                    </button>
-                    <p id="mark-sent-confirm" class="hidden"
-                        style="color: #3ecf8e; margin-top: 10px; font-size: 0.9rem; font-weight: 500;">
-                        ✅ Tracked! You'll find it in your Submissions.
-                    </p>
+                <div id="pitch-error" class="pitch-error hidden">
+                    <p>⚠ Failed to generate pitch. Please try again.</p>
+                    <button id="retry-pitch" class="btn-secondary">Retry</button>
                 </div>
             </div>
         </div>
