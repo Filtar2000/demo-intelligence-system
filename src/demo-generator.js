@@ -1,142 +1,103 @@
+// ─── SMART PITCH TEMPLATES ───
+// No API needed. Professional templates with dynamic variable replacement.
 
-const GEMINI_API_KEY = "AIzaSyAv_NPbgitT4i8jJSoX7ty-J_SNl73j7oA";
-const MODEL_NAME = "gemini-2.0-flash";
+export function generatePitch(label, trackMetrics, artistName = "Artist") {
+    // Build context strings from label data
+    const labelName = label.name || 'your label';
+    const genres = Array.isArray(label.subgenres) ? label.subgenres.join(', ') : '';
+    const moods = Array.isArray(label.mood) ? label.mood.join(' / ') : '';
+    const energy = label.energy || label.energy_profile || '';
 
-export async function generatePitch(label, trackMetrics, artistName = "Artist") {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+    // Track info
+    const bpm = trackMetrics.bpm ? Math.round(trackMetrics.bpm) : null;
+    const lufs = trackMetrics.lufs ? trackMetrics.lufs.toFixed(1) : null;
+    const isHighEnergy = trackMetrics.energyStdDev !== undefined && trackMetrics.energyStdDev > 0.15;
 
-    // Build rich context from label data
-    const labelInfo = [];
-    if (label.bio) labelInfo.push(`Label description: ${label.bio}`);
-    if (label.mood && label.mood.length) labelInfo.push(`Label mood: ${label.mood.join(', ')}`);
-    if (label.style && label.style.length) labelInfo.push(`Label style: ${label.style.join(', ')}`);
-    if (label.subgenres && label.subgenres.length) labelInfo.push(`Genres: ${label.subgenres.join(', ')}`);
-    if (label.energy || label.energy_profile) labelInfo.push(`Energy: ${label.energy || label.energy_profile}`);
+    // Build a one-liner about the track's sound
+    const trackDescParts = [];
+    if (bpm) trackDescParts.push(`${bpm} BPM`);
+    if (genres) trackDescParts.push(genres.split(',')[0].trim()); // primary genre
+    if (moods) trackDescParts.push(moods.split('/')[0].trim().toLowerCase());
+    const trackOneLiner = trackDescParts.length > 0
+        ? trackDescParts.join(', ')
+        : 'electronic';
 
-    const trackInfo = [];
-    if (trackMetrics.bpm) trackInfo.push(`BPM: ${Math.round(trackMetrics.bpm)}`);
-    if (trackMetrics.lufs) trackInfo.push(`LUFS: ${trackMetrics.lufs.toFixed(1)}`);
-    if (trackMetrics.energyStdDev !== undefined) {
-        trackInfo.push(`Energy style: ${trackMetrics.energyStdDev > 0.15 ? 'High Energy / Dynamic' : 'Deep / Atmospheric / Subtle'}`);
-    }
+    // Build a sentence about why this label specifically
+    const labelFitLine = genres
+        ? `I've been following ${labelName}'s releases in the ${genres.split(',')[0].trim()} space`
+        : `I've been following ${labelName}'s catalogue`;
 
-    const promptText = `You are an expert music industry manager specializing in electronic music demo submissions.
+    const moodLine = moods
+        ? `I think the ${moods.toLowerCase()} direction of this track aligns well with your sound.`
+        : `I believe this track fits the direction of your releases.`;
 
-Write 3 variants of a pitch email to submit a demo to ${label.name}.
+    const trackSpecLine = bpm
+        ? `The track sits at ${bpm} BPM${lufs ? ` / ${lufs} LUFS` : ''} — ready for release.`
+        : '';
 
-${labelInfo.length > 0 ? `ABOUT THE LABEL:\n${labelInfo.join('\n')}` : ''}
+    // ── VARIANT 1: Formal & Professional ──
+    const formal = {
+        subject: `Demo Submission — ${trackOneLiner}`,
+        body: `Hi ${labelName} team,
 
-${trackInfo.length > 0 ? `ABOUT THE TRACK:\n${trackInfo.join('\n')}` : ''}
+${labelFitLine} and I'd like to submit a track for your consideration.
 
-The 3 variants must be:
-1) Formal and professional
-2) Direct and concise  
-3) Personal and creative
+${moodLine}${trackSpecLine ? '\n\n' + trackSpecLine : ''}
 
-Rules:
-- Each email must have a subject line and body
-- MAX 120 words per variant
-- Be authentic, not robotic
-- Skip generic phrases like "I hope this email finds you well"
-- Reference the label's specific style/sound if known
-- Be respectful but confident
-- Write in English
+The demo is attached as a private streaming link. Happy to send a WAV if there's interest.
 
-Respond ONLY with a valid JSON array, no markdown formatting:
-[{"subject": "...", "body": "..."}, {"subject": "...", "body": "..."}, {"subject": "...", "body": "..."}]`;
+Looking forward to hearing your thoughts.
 
-    const requestBody = {
-        contents: [{
-            parts: [{ text: promptText }]
-        }],
-        generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 2048
-        }
+Best regards`
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
+    // ── VARIANT 2: Direct & Concise ──
+    const direct = {
+        subject: `Demo for ${labelName}`,
+        body: `Hey,
 
-        if (!response.ok) {
-            const errData = await response.json().catch(() => ({}));
-            console.error('Gemini API error:', response.status, errData);
-            throw new Error(`API Error ${response.status}: ${errData?.error?.message || response.statusText}`);
-        }
+Got a ${trackOneLiner} track that I think fits ${labelName}'s sound. ${moodLine}
 
-        const data = await response.json();
+${trackSpecLine ? trackSpecLine + '\n\n' : ''}Link attached — let me know if you'd like the full WAV.
 
-        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
-            throw new Error('No candidates returned from Gemini API');
-        }
+Cheers`
+    };
 
-        const candidate = data.candidates[0].content.parts[0].text;
+    // ── VARIANT 3: Personal & Creative ──
+    const creative = {
+        subject: `New ${trackOneLiner} — would love your ears on this`,
+        body: `Hi there,
 
-        // Parse JSON — handle markdown code blocks
-        let jsonString = candidate.trim();
-        if (jsonString.startsWith('```json')) {
-            jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        } else if (jsonString.startsWith('```')) {
-            jsonString = jsonString.replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
+${labelFitLine} — your A&R taste is exactly why I'm reaching out.
 
-        const emailVariants = JSON.parse(jsonString);
+I've been working on a ${isHighEnergy ? 'high-energy' : 'deep, atmospheric'} piece that I think would sit well alongside your recent releases. ${moodLine}
 
-        // Validate structure
-        if (!Array.isArray(emailVariants) || emailVariants.length < 1) {
-            throw new Error('Invalid response format: expected array of email variants');
-        }
+${trackSpecLine ? trackSpecLine + '\n\n' : ''}Would love your honest feedback — even a "not for us" helps me grow.
 
-        return emailVariants;
+Thanks for your time`
+    };
 
-    } catch (error) {
-        console.error("Error generating pitch:", error);
-        throw error;
-    }
+    // Return as resolved promise (keeps the same async interface)
+    return Promise.resolve([formal, direct, creative]);
 }
 
-export async function generateFollowUp(labelName, trackName) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL_NAME}:generateContent?key=${GEMINI_API_KEY}`;
+export function generateFollowUp(labelName, trackName) {
+    const track = trackName || 'my recent demo';
 
-    const promptText = `Write a brief follow-up email for a demo sent to ${labelName} one week ago.
-Track name: "${trackName || 'my demo'}".
-Goal: politely ask if they had a chance to listen.
-Tone: Professional but not pushy.
-Max 60 words.
+    const email = {
+        subject: `Following up — ${track}`,
+        body: `Hi ${labelName} team,
 
-Respond ONLY with a JSON object: {"subject": "...", "body": "..."}`;
+I sent over "${track}" about a week ago and wanted to check if you had a chance to listen.
 
-    const requestBody = {
-        contents: [{ parts: [{ text: promptText }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
+No rush at all — I know you receive a lot of demos. Just want to make sure it didn't slip through.
+
+Happy to answer any questions or send alternative formats.
+
+Thanks again for considering it.
+
+Best regards`
     };
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
-        const data = await response.json();
-        const candidate = data.candidates[0].content.parts[0].text;
-
-        let jsonString = candidate.trim();
-        if (jsonString.startsWith('```json')) {
-            jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-        } else if (jsonString.startsWith('```')) {
-            jsonString = jsonString.replace(/^```\s*/, '').replace(/\s*```$/, '');
-        }
-
-        return JSON.parse(jsonString);
-
-    } catch (error) {
-        console.error("Error generating follow-up:", error);
-        throw error;
-    }
+    return Promise.resolve(email);
 }
