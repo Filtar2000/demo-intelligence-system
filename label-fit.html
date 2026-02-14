@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Label Matching - Demo Intelligence System</title>
+    <title>Label Match — DIS</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,17 +35,27 @@
 
     <main class="analysis-container">
         <section class="analysis-header">
-            <h1>Label Compatibility</h1>
-            <p>Based on your track's unique sonic fingerprint.</p>
+            <h1>Label Match</h1>
+            <p>See which labels fit your sound, based on genre, mood, and energy.</p>
         </section>
+
+        <!-- Empty State (shown when no analysis data) -->
+        <div id="empty-state" class="hidden" style="text-align:center; padding: 60px 20px;">
+            <div style="font-size: 3rem; margin-bottom: 16px;">🎧</div>
+            <h2 style="color: var(--text-primary); font-size: 1.4rem; margin-bottom: 8px;">No track analyzed yet</h2>
+            <p
+                style="color: var(--text-secondary); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                Analyze a track first — we use your genre, mood, and energy selections to find labels that fit your
+                sound.</p>
+            <a href="analysis.html" class="btn-primary"
+                style="display: inline-block; text-decoration: none; padding: 12px 32px;">Go to Track Check</a>
+        </div>
 
         <!-- Loader -->
         <div id="loader" class="loader"></div>
 
         <!-- Results Grid -->
-        <div id="labels-grid" class="labels-grid hidden">
-            <!-- Cards will be injected here -->
-        </div>
+        <div id="labels-grid" class="labels-grid hidden"></div>
 
         <div id="no-results" class="hidden" style="text-align: center; margin-top: 50px; color: #888;">
             <p>No matching labels found. Try analyzing a different track.</p>
@@ -56,7 +66,7 @@
         <div id="pitch-modal" class="modal-overlay hidden">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title">Generated Pitch Emails</h2>
+                    <h2 class="modal-title">✉ Pitch Draft</h2>
                     <button id="close-modal" class="close-modal">&times;</button>
                 </div>
 

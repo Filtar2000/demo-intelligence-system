@@ -438,8 +438,10 @@ if (isLabelFitPage) {
 
         const storedMetrics = localStorage.getItem('trackMetrics');
         if (!storedMetrics) {
-            alert('No analysis data found. Please analyze a track first.');
-            window.location.href = 'analysis.html';
+            // Show inline empty state instead of alert popup
+            loader.classList.add('hidden');
+            const emptyState = document.getElementById('empty-state');
+            if (emptyState) emptyState.classList.remove('hidden');
             return;
         }
 
@@ -470,7 +472,8 @@ if (isLabelFitPage) {
         } catch (err) {
             console.error('Error fetching labels:', err);
             loader.classList.add('hidden');
-            alert('Failed to load labels.');
+            labelsGrid.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:40px;">Could not load labels. Check your connection and try again.</p>';
+            labelsGrid.classList.remove('hidden');
         }
     });
 }

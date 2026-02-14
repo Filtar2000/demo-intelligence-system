@@ -1,5 +1,5 @@
 /* ============================================
-   DEMO INTELLIGENCE SYSTEM — Design System v2
+   DIS — Design System v2
    Premium Dark Theme · Warm Accent
    ============================================ */
 
@@ -583,9 +583,9 @@ main {
     letter-spacing: 0.05em;
 }
 
-#genre-select {
+.genre-selector select {
     width: 100%;
-    padding: 11px 14px;
+    padding: 12px 40px 12px 16px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
@@ -593,18 +593,32 @@ main {
     font-size: 0.95rem;
     font-family: var(--font-body);
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
     outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23d4a843' d='M1.41 0L6 4.58 10.59 0 12 1.41l-6 6-6-6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px 8px;
 }
 
-#genre-select:focus {
+.genre-selector select:hover {
+    border-color: rgba(212, 168, 67, 0.4);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.genre-selector select:focus {
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
-#genre-select option {
+.genre-selector select option,
+.genre-selector select optgroup {
     background: var(--bg-card);
     color: var(--text-primary);
+    font-family: var(--font-body);
 }
 
 /* Results */
@@ -1024,7 +1038,9 @@ main {
 .crm-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
     margin-bottom: var(--space-lg);
 }
 

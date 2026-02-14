@@ -294,17 +294,29 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isFinite(peakDb)) peakDb = -100;
             let headroom = 0 - peakDb;
 
-            // 3. Intro Duration
+            // 3. Intro Duration — sliding-window approach
+            // Compare a running window against a fraction of the track's own loudness.
+            // The intro ends when the energy consistently exceeds 20% of the track's
+            // average loudness for at least 3 consecutive windows.
+            const secondsPerChunk = bufferSize / sampleRate;
+            const trackAvgRms = avgRms;
+            const introThreshold = trackAvgRms * 0.20; // 20% of the track's own average level
+            const requiredConsecutive = 3; // need 3 consecutive loud frames to count as "intro over"
             let introFrames = 0;
-            const energyThreshold = 0.1;
+            let consecutiveLoud = 0;
             for (let i = 0; i < rmsValues.length; i++) {
-                if (rmsValues[i] > energyThreshold) {
-                    introFrames = i;
-                    break;
+                if (rmsValues[i] > introThreshold) {
+                    consecutiveLoud++;
+                    if (consecutiveLoud >= requiredConsecutive) {
+                        introFrames = i - requiredConsecutive + 1;
+                        break;
+                    }
+                } else {
+                    consecutiveLoud = 0;
                 }
             }
-            if (introFrames === 0 && avgRms < 0.05) introFrames = rmsValues.length;
-            const secondsPerChunk = bufferSize / sampleRate;
+            // If we never found the transition, the whole track is quiet (unlikely for a master)
+            if (consecutiveLoud < requiredConsecutive) introFrames = 0;
             let introDuration = introFrames * secondsPerChunk;
 
             // 4. Energy Variation
@@ -353,7 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const gp = GENRE_PROFILES[selectedGenre] || DEFAULT_PROFILE;
             updateBar(barBpm, metrics.bpm >= gp.bpmMin && metrics.bpm <= gp.bpmMax, 100);
             updateBar(barLufs, metrics.lufs >= gp.lufsMin && metrics.lufs <= gp.lufsMax, mapRange(metrics.lufs, -30, 0, 0, 100));
-            updateBar(barHeadroom, metrics.headroom >= 3, Math.min(100, metrics.headroom * 10));
+            // For mastered tracks: 0.3–1 dB headroom is standard; > 0 dB true peak = problem
+            updateBar(barHeadroom, metrics.headroom >= 0.1, Math.min(100, Math.max(5, metrics.headroom * 50)));
             updateBar(barIntro, metrics.intro >= gp.introMin && metrics.intro <= gp.introMax, Math.min(100, (metrics.intro / Math.max(gp.introMax, 32)) * 100));
             updateBar(barEnergy, metrics.energyStdDev >= gp.energyMin, Math.min(100, metrics.energyStdDev * 500));
 
@@ -583,11 +596,14 @@ document.addEventListener('DOMContentLoaded', () => {
             score += Math.round(Math.max(0, 25 - penalty));
         }
 
-        // 3. Headroom — 1dB minimum required, 3dB+ ideal (15 pts)
-        if (metrics.headroom >= 3) {
-            score += 15;
-        } else if (metrics.headroom >= 1) {
-            score += Math.round(((metrics.headroom - 1) / 2) * 15);
+        // 3. Headroom — for finished masters, 0.3–1 dB is standard (15 pts)
+        // True peak above 0 dBFS = clipping risk on conversion
+        if (metrics.headroom >= 0.3) {
+            score += 15;  // any headroom above 0.3 dB is fine for a master
+        } else if (metrics.headroom >= 0.1) {
+            score += 10;  // very tight but acceptable
+        } else {
+            score += 3;   // true peak essentially at 0 — inter-sample clipping risk
         }
 
         // 4. Intro length — scored against genre expectations (15 pts)
@@ -617,46 +633,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const genreName = profile.label;
         let suggestions = [];
 
-        // LUFS — genre-specific feedback
+        // ── LUFS ──
         if (metrics.lufs < profile.lufsMin) {
             const gap = Math.abs(metrics.lufs - profile.lufsMin).toFixed(1);
-            suggestions.push(`Loudness is ${gap} dB below the typical range for ${genreName}. Most ${genreName} releases sit between ${profile.lufsMin} and ${profile.lufsMax} LUFS. Try pushing your limiter a bit harder, or check if your mix has too much low-end eating up headroom.`);
+            suggestions.push(`Integrated loudness reads ${metrics.lufs.toFixed(1)} LUFS — about ${gap} dB below the typical mastering target for ${genreName} (${profile.lufsMin} to ${profile.lufsMax} LUFS). If this is a pre-master, that's expected. On a finished master, check your limiter ceiling and make sure low-end buildup isn't stealing headroom from the rest of the spectrum.`);
         } else if (metrics.lufs > profile.lufsMax) {
             const gap = Math.abs(metrics.lufs - profile.lufsMax).toFixed(1);
-            suggestions.push(`Loudness is ${gap} dB above typical ${genreName} levels (${profile.lufsMin} to ${profile.lufsMax} LUFS). This can cause audible distortion and pumping. Back off the limiter and check your gain staging.`);
+            suggestions.push(`Integrated loudness reads ${metrics.lufs.toFixed(1)} LUFS — about ${gap} dB above the typical ${genreName} ceiling of ${profile.lufsMax} LUFS. At this level, you may be introducing limiter distortion or audible pumping. Pull the output ceiling back and A/B your master against a reference track.`);
         }
 
-        // BPM — genre-specific feedback
+        // ── BPM ──
         if (metrics.bpm > 0) {
             const bpmRound = Math.round(metrics.bpm);
             if (metrics.bpm < profile.bpmMin || metrics.bpm > profile.bpmMax) {
-                suggestions.push(`Detected BPM: ${bpmRound}. ${genreName} tracks typically sit between ${profile.bpmMin}–${profile.bpmMax} BPM. If this is intentional, no worries — but some labels may expect tracks within the standard range for the genre.`);
+                suggestions.push(`Detected tempo: ${bpmRound} BPM. Standard range for ${genreName} is ${profile.bpmMin}–${profile.bpmMax} BPM. If this is intentional (half-time feel, tempo shifts), no issue — but labels that program DJ sets may prefer tracks within that window.`);
             }
         }
 
-        // Headroom
-        if (metrics.headroom < 1) {
-            suggestions.push(`Almost no headroom (${metrics.headroom.toFixed(1)} dB). Your peaks are hitting 0 dBFS, which can cause clipping on some systems. Most labels ask for at least 1–3 dB of headroom on demos so their mastering engineer has room to work.`);
-        } else if (metrics.headroom < 3) {
-            suggestions.push(`Headroom is tight at ${metrics.headroom.toFixed(1)} dB. Many labels prefer demos with 3–6 dB of headroom. Consider pulling back your master fader or reducing limiter output.`);
+        // ── TRUE PEAK / HEADROOM ──
+        // This is a finished master — near-zero headroom is normal.
+        // Only warn about true peak clipping risk.
+        if (metrics.headroom < 0.1) {
+            suggestions.push(`True peak is essentially at 0 dBFS (headroom: ${metrics.headroom.toFixed(1)} dB). On lossy codecs (MP3, AAC, streaming) this almost always causes inter-sample clipping. Set your limiter's true peak ceiling to −0.3 dBTP or lower — this is an industry standard (ITU-R BS.1770).`);
+        } else if (metrics.headroom >= 3) {
+            suggestions.push(`Headroom is ${metrics.headroom.toFixed(1)} dB — the master may be under-limited for ${genreName}. Most finished ${genreName} masters peak between −1.0 and −0.3 dBTP. If you're sending a pre-master intentionally, ignore this.`);
         }
 
-        // Intro length — genre-specific
-        if (metrics.intro < profile.introMin) {
-            const barsEstimate = Math.round(profile.introMin / 2); // rough: 1 bar ≈ 2s at ~120bpm
-            suggestions.push(`Intro is ${metrics.intro.toFixed(1)}s — shorter than what DJs usually need for ${genreName}. Aim for at least ${profile.introMin}–${profile.introMax} seconds (~${barsEstimate}+ bars) so DJs can mix in smoothly.`);
+        // ── INTRO LENGTH ──
+        if (metrics.intro < profile.introMin && metrics.intro > 0.5) {
+            // Only flag if we have a reasonable reading (>0.5s means we actually detected some intro)
+            const bpm = metrics.bpm || 125;
+            const barLength = 60 / bpm * 4; // seconds per bar
+            const targetBars = Math.round(profile.introMin / barLength);
+            suggestions.push(`Intro measures about ${metrics.intro.toFixed(1)}s. For ${genreName}, DJs typically need ${profile.introMin}–${profile.introMax}s (~${targetBars}+ bars at ${Math.round(bpm)} BPM) to mix in cleanly. Consider extending with a rhythmic or atmospheric lead-in.`);
         } else if (metrics.intro > profile.introMax * 2) {
-            suggestions.push(`Intro runs ${metrics.intro.toFixed(1)}s, which is unusually long even for ${genreName}. Consider trimming it — you can always provide an extended mix separately.`);
+            suggestions.push(`Intro runs ${metrics.intro.toFixed(1)}s — on the long side even for ${genreName}. A long intro can work in an extended mix, but for demo submissions most A&Rs prefer a tighter arrangement.`);
         }
 
-        // Energy dynamics
+        // ── ENERGY DYNAMICS ──
         if (metrics.energyStdDev < profile.energyMin) {
-            suggestions.push(`The track's energy feels fairly flat (variation: ${metrics.energyStdDev.toFixed(3)}). ${genreName} tracks usually benefit from contrast between breakdowns and drops. Try automating filters, adding risers, or creating more pronounced build-ups.`);
+            suggestions.push(`Dynamic variation is low (${metrics.energyStdDev.toFixed(3)}). ${genreName} tracks benefit from contrast between sections — breakdowns, builds, drops. Automate filters, use arrangement dynamics, or add transitional FX to create tension and release.`);
         }
 
-        // Positive feedback when everything is good
+        // ── ALL GOOD ──
         if (suggestions.length === 0) {
-            suggestions.push(`Looking solid for ${genreName}. BPM, loudness, intro, and dynamics are all within the expected range. Focus on the mix quality and arrangement — the technical side checks out.`);
+            suggestions.push(`Technical specs look solid for ${genreName}. Loudness, BPM, peak level, intro, and dynamics are all within expected ranges. Focus on mix quality, arrangement, and making sure it stands out musically — the engineering checks out.`);
         }
 
         return suggestions.slice(0, 5);
