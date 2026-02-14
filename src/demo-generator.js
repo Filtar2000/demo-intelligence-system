@@ -11,7 +11,7 @@ export function generatePitch(label, trackMetrics, artistName = "Artist") {
     // Track info
     const bpm = trackMetrics.bpm ? Math.round(trackMetrics.bpm) : null;
     const lufs = trackMetrics.lufs ? trackMetrics.lufs.toFixed(1) : null;
-    const isHighEnergy = trackMetrics.energyStdDev !== undefined && trackMetrics.energyStdDev > 0.15;
+    const isHighEnergy = trackMetrics.crestFactor !== undefined && trackMetrics.crestFactor < 8;
 
     // Build a one-liner about the track's sound
     const trackDescParts = [];
